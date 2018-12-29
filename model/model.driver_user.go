@@ -44,6 +44,7 @@ type DriverUserModel struct {
 	Driverassigned                  string `db:"driver_assigned" json:"driver_assigned"`
 	Driverdutystatus                string `db:"driver_duty_status" json:"driver_duty_status"`
 	Name                            string `db:"name" json:"name"`
+	DeviceId                        string `db:"device_id" json:"device_id"`
 }
 
 type DriverUserTable struct {
@@ -84,6 +85,7 @@ type DriverUserTable struct {
 	Driverassigned                  sql.NullString `db:"driver_assigned" json:"driver_assigned"`
 	Driverdutystatus                sql.NullString `db:"driver_duty_status" json:"driver_duty_status"`
 	Name                            sql.NullString `db:"name" json:"name"`
+	DeviceId                        string         `db:"device_id" json:"device_id"`
 }
 
 func (table DriverUserTable) GetModel() DriverUserModel {
@@ -125,6 +127,7 @@ func (table DriverUserTable) GetModel() DriverUserModel {
 		Driverassigned:                  table.Driverassigned.String,
 		Driverdutystatus:                table.Driverdutystatus.String,
 		Name:                            table.Name.String,
+		DeviceId:                        table.DeviceId,
 	}
 }
 
@@ -167,6 +170,7 @@ func (model DriverUserModel) GetTable() DriverUserTable {
 		Driverassigned:                  sql.NullString{model.Driverassigned, false},
 		Driverdutystatus:                sql.NullString{model.Driverdutystatus, false},
 		Name:                            sql.NullString{model.Name, false},
+		DeviceId:                        model.DeviceId,
 	}
 }
 
@@ -180,6 +184,26 @@ func (db *DBTuktuk) GetDriverByToken(ctx context.Context, authToken string) (Dri
 	err = statement.GetDriverUserByAuth.SelectContext(ctx, &driverTable, authToken)
 	if err != nil {
 		log.Println("[GetDriverByToken][Error] Err in fetching data from db", err)
+		return driverModel, err
+	}
+
+	for _, driver := range driverTable {
+		driverModel = driver.GetModel()
+	}
+
+	return driverModel, nil
+}
+
+func (db *DBTuktuk) GetDriverUserById(ctx context.Context, id int64) (DriverUserModel, error) {
+	var (
+		driverModel DriverUserModel
+		driverTable []DriverUserTable
+		err         error
+	)
+
+	err = statement.GetDriverUserById.SelectContext(ctx, &driverTable, id)
+	if err != nil {
+		log.Println("[GetDriverUserById][Error] Err in fetching data from db", err)
 		return driverModel, err
 	}
 

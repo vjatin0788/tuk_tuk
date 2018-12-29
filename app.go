@@ -4,13 +4,20 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/TukTuk/core"
+	"github.com/TukTuk/fulfilment"
+
 	"github.com/TukTuk/authentication"
+	"github.com/TukTuk/maps"
 	"github.com/TukTuk/model"
 
 	"github.com/TukTuk/api"
 )
 
 func main() {
+
+	cfg := core.InitConfig()
+
 	api.InitApiMod()
 	api.Api.InitHandler()
 
@@ -20,6 +27,9 @@ func main() {
 	}
 
 	authentication.InitAuth()
+	fulfilment.InitFF(cfg)
+
+	maps.InitMaps(cfg)
 
 	log.Printf("serving at localhost:%d", 8000)
 	log.Fatal(http.ListenAndServe(":8000", nil))

@@ -18,28 +18,16 @@ func (ff *FFClient) DriverAvailable(ctx context.Context, userLat, userLong float
 	var (
 		response []RiderAvailableResponse
 		err      error
-		data     []model.DriverTrackingModel
 	)
 
 	if userLat == 0 || userLong == 0 {
 		return nil, errors.New("Empty lat or long")
 	}
 
-	data, err = model.TukTuk.GetAvailableDriver(ctx, lib.Rad(userLat), lib.Rad(userLong), DISTANCE, RADIUS)
+	driverData, err := ff.getAvailableDriverVehicle(ctx, userLat, userLong, vehicleType)
 	if err != nil {
-		log.Println("[RiderAvailable][Error] Error in fetching data", err)
-		return nil, err
+		return driverData, err
 	}
-
-	dataMap, driverIds := getGetAvailableDriverMap(ctx, data)
-
-	vehicles, err := model.TukTuk.GetVehicleByAssignedDriver(ctx, driverIds)
-	if err != nil {
-		log.Println("[RiderAvailable][Error] Error in fetching vehicle data", err)
-		return nil, err
-	}
-
-	driverData := getGetAvailableVehicles(ctx, vehicles, dataMap, vehicleType)
 
 	for _, driver := range driverData {
 		response = append(response, RiderAvailableResponse{
@@ -139,4 +127,31 @@ func getGetAvailableVehicles(ctx context.Context, vehicles []model.VehicleModel,
 	}
 
 	return driverModel
+}
+
+func (ff *FFClient) getAvailableDriverVehicle(ctx context.Context, userLat, userLong float64, vehicleType string) ([]model.DriverTrackingModel, error) {
+	var (
+		driverData []model.DriverTrackingModel
+		err        error
+	)
+
+	data, err := model.TukTuk.GetAvailableDriver(ctx, lib.Rad(userLat), lib.Rad(userLong), DISTANCE, RADIUS)
+	if err != nil {
+		log.Println("[getAvailableDriverVehicle][Error] Error in fetching data", err)
+		return driverData, err
+	}
+
+	dataMap, driverIds := getGetAvailableDriverMap(ctx, data)
+
+	vehicles, err := model.TukTuk.GetVehicleByAssignedDriver(ctx, driverIds)
+	if err != nil {
+		log.Println("[getAvailableDriverVehicle][Error] Error in fetching vehicle data", err)
+		return driverData, err
+	}
+
+	log.Printf("vehicles: %+v", vehicles)
+
+	driverData = getGetAvailableVehicles(ctx, vehicles, dataMap, vehicleType)
+
+	return driverData, err
 }

@@ -49,6 +49,7 @@ func (fn HandlerFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if buf, err = json.Marshal(response); err != nil {
 		rw.WriteHeader(400)
 	}
+
 	rw.Write(buf)
 
 }
@@ -58,6 +59,7 @@ func (api *APIMod) InitHandler() {
 
 	r.Handle("/v1/tuktuk/driver/available", HandlerFunc(api.DriverAvailableHandler))
 	r.Handle("/v1/tuktuk/driver/hotspot", HandlerFunc(api.DriverWebhook))
+	r.Handle("/v1/tuktuk/rider/request", HandlerFunc(api.RequestRide))
 
 	http.Handle("/", r)
 	log.Println("Handler initialized")
