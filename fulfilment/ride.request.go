@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"sort"
 	"time"
+
+	"github.com/TukTuk/lib"
 
 	"github.com/TukTuk/common"
 	"github.com/TukTuk/maps"
@@ -15,10 +18,7 @@ import (
 
 func (ff *FFClient) RequestRide(ctx context.Context, customerID int64, sLat, sLong, dLat, dLong float64, vehicleType string) (interface{}, error) {
 
-	// if origin == "" {
-	// 	log.Println("[RequestRide][Error]Empty Origin details")
-	// 	return nil, errors.New("Empty Origin details")
-	// }
+	log.Printf("[RequestRide] Ride Source Lat:%f,Long:%f and Destination Lat:%f,Long:%f", sLat, sLong, dLat, dLong)
 
 	ride, err := model.TukTuk.GetRideDetailsByCustomerId(ctx, customerID)
 	if err != nil {
@@ -76,8 +76,9 @@ func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, 
 	}
 
 	log.Println("RIDE CREATED, RIDE ID#:", rideId)
+	ride.Id = rideId
 
-	resp, err = ff.findDriver(ctx, ride, rideId, vehicleType)
+	resp, err = ff.findDriver(ctx, &ride, vehicleType)
 	if err != nil {
 		return nil, err
 	}
@@ -85,9 +86,8 @@ func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, 
 	return resp, err
 }
 
-func (ff *FFClient) findDriver(ctx context.Context, ride model.RideDetailModel, rideId int64, vehicleType string) (*RideBookResponse, error) {
+func (ff *FFClient) findDriver(ctx context.Context, ride *model.RideDetailModel, vehicleType string) (*RideBookResponse, error) {
 	var (
-		//	defaultResp RideBookResponse
 		err error
 	)
 
@@ -118,21 +118,43 @@ func (ff *FFClient) findDriver(ctx context.Context, ride model.RideDetailModel, 
 	driversList := ff.getDriversData(ctx, distance, drivers)
 
 	// send push notification.
-	driverAloted, err := ff.sendPushNotification(ctx, driversList, rideId)
+	driverAloted, err := ff.sendPushNotification(ctx, driversList, ride)
 	if err != nil {
 		log.Println("[FindDriver][Error] Err in sending push notification", err)
 		return nil, err
 	}
 
-	return ff.rideResponse(ctx, driverAloted, rideId)
+	return ff.rideResponse(ctx, driverAloted, ride)
 }
 
-func (ff *FFClient) rideResponse(ctx context.Context, driverId, rideId int64) (*RideBookResponse, error) {
+func (ff *FFClient) rideResponse(ctx context.Context, driverId int64, ride *model.RideDetailModel) (*RideBookResponse, error) {
 
 	var (
 		resp RideBookResponse
 		err  error
 	)
+
+	//if no driver aloted
+	if driverId == 0 {
+		err := ff.RideStateTransition(ctx, ride, common.RideStatus.FAILED.ID)
+		if err != nil {
+			log.Println("[rideResponse][Error] Err in state transition", err)
+			return nil, err
+		}
+
+		ride.RideFailedTime = time.Now().UTC().String()
+
+		err = model.TukTuk.UpdateRide(ctx, *ride)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Println("[rideResponse]No Driver Found.")
+		return &RideBookResponse{
+			Message: "No Driver Found",
+			RideId:  ride.Id,
+		}, err
+	}
 
 	ddata, err := model.TukTuk.GetDriverUserById(ctx, driverId)
 	if err != nil {
@@ -174,7 +196,7 @@ func (ff *FFClient) rideResponse(ctx context.Context, driverId, rideId int64) (*
 		},
 		CurrentLat:  driverModel.CurrentLatitude,
 		CurrentLong: driverModel.CurrentLongitude,
-		RideId:      rideId,
+		RideId:      ride.Id,
 	}
 
 	return &resp, err
@@ -251,32 +273,66 @@ func (ff *FFClient) RideStateTransition(ctx context.Context, ride *model.RideDet
 	return err
 }
 
-func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverData, rideId int64) (int64, error) {
+func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverData, ride *model.RideDetailModel) (int64, error) {
 
 	var (
-		res  int64
-		ride model.RideDetailModel
-		err  error
+		res         int64
+		rideUpdated model.RideDetailModel
+		err         error
 	)
 
-	for _, driver := range drivers {
-		ride, err = model.TukTuk.GetRideDetailsByRideId(ctx, rideId)
-		if err != nil {
-			log.Println("[sendPushNotification][Error] Error in fetching data", err)
-			return res, err
+	for idx, driver := range drivers {
+
+		//first check should be skipped.
+		if idx > 0 {
+			rideUpdated, err = model.TukTuk.GetRideDetailsByRideId(ctx, ride.Id)
+			if err != nil {
+				log.Println("[sendPushNotification][Error] Error in fetching data", err)
+				return res, err
+			}
+
+			if rideUpdated.Status == common.RideStatus.BOOKED.ID {
+				log.Printf("Ride booked for ride id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
+				break
+			}
 		}
 
-		if ride.Status == common.RideStatus.BOOKED.ID {
-			break
+		//Sending push notification for 20 sec.
+		if !ff.checkIfDriverLocValid(ctx, ride, driver) {
+			log.Printf("[sendPushNotification] Driver location not valid to send push notification, skipping id: %d", driver.Id)
+			continue
 		}
 
 		log.Printf("Sending Push notification to driver id:%d", driver.Id)
-		//Sending push notification for 20 sec.
-		time.Sleep(20 * time.Second)
+		time.Sleep(common.TIME_SLEEP)
 	}
 
-	res = ride.DriverId
-	log.Printf("Ride booked for ride id:%d , driver id:%d", rideId, ride.DriverId)
+	res = rideUpdated.DriverId
 
 	return res, err
+}
+
+func (ff *FFClient) liesInCustomerArea(ctx context.Context, sLat, sLong, dLat, dLong float64) bool {
+
+	//haversine formula
+	currentPoint := math.Acos(math.Sin(lib.Rad(sLat))*math.Sin(lib.Rad(dLat)) + math.Cos(lib.Rad(sLat))*math.Cos(lib.Rad(dLat))*math.Cos(lib.Rad(dLong)-lib.Rad(sLong)))
+
+	log.Printf("[liesInCustomerArea] Current Point:%f, dist/rad:%f", currentPoint, DISTANCE/RADIUS)
+	if currentPoint <= (DISTANCE / RADIUS) {
+		log.Printf("[liesInCustomerArea] location valid for driver lat:%f ,long:%f", dLat, dLong)
+		return true
+	}
+	return false
+}
+
+func (ff *FFClient) checkIfDriverLocValid(ctx context.Context, ride *model.RideDetailModel, driver DriverData) bool {
+
+	driverModel, err := model.TukTuk.GetDriverById(ctx, driver.Id)
+	if err != nil {
+		log.Println("[checkIfDriverLocValid][Error] Error in fetching data", err)
+	}
+
+	log.Printf("[checkIfDriverLocValid] driver result:%+v", driverModel)
+
+	return ff.liesInCustomerArea(ctx, ride.SourceLat, ride.SourceLong, driverModel.CurrentLatitude, driverModel.CurrentLongitude)
 }

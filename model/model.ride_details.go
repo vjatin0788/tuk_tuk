@@ -120,7 +120,7 @@ func (table RideDetailTabel) UpdateRideDetails(ctx context.Context) error {
 
 	_, err = statement.UpdateRideDetails.ExecContext(ctx, table.DriverId, table.Status,
 		table.DriverCancelled, table.RiderCancelled, table.RideBookedTime, table.RideCompletedTime,
-		table.RideFailedTime)
+		table.RideFailedTime, table.RideStartTime, table.Id)
 	if err != nil {
 		log.Println("[UpdateRideDetails][Error] Err in inserting", err)
 		return err

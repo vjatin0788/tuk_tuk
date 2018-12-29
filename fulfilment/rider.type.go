@@ -22,6 +22,7 @@ type RideBookResponse struct {
 	CurrentLat   float64               `json:"current_lat"`
 	CurrentLong  float64               `json:"current_long"`
 	RideId       int64                 `json:"ride_id"`
+	Message      string                `json:"message"`
 }
 
 type DriverData struct {

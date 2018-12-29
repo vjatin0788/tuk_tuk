@@ -36,7 +36,7 @@ var (
 	insertInvoiceByCustomerId  = `INSERT INTO tbinvoice(customer_id,driver_id,source_lat,source_lng,source_address,destination_lat,destination_lng,source_time,total_minutes,cost_per_minute,time_cost,distance,cost_per_km,distance_cost,base_fare,extra_charges,discount,total_cost,gst_percentage,gst,final_cost) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 	getInvoiceByCustomerId     = `SELECT * FROM tbinvoice WHERE customer_id=? ORDER BY invoice_id DESC LIMIT `
 	insertRideDetails          = `INSERT INTO tb_ride_details(customer_id,source_lat,source_long,destination_lat,destination_long,status) VALUES(?,?,?,?,?,?)`
-	updateRideDetailsByRideId  = `UPDATE tb_ride_details SET driver_id=?,status=?,driver_cancelled=?,rider_cancelled=?,ride_booked_time=?,ride_completed_time=?,ride_failed_time=?  where id=?`
+	updateRideDetailsByRideId  = `UPDATE tb_ride_details SET driver_id=?,status=?,driver_cancelled=?,rider_cancelled=?,ride_booked_time=?,ride_completed_time=?,ride_failed_time=?,ride_start_time=? WHERE id=?`
 	getRideDetailsByRideId     = `SELECT * FROM tb_ride_details WHERE id=?`
 	getRideDetailsByCustomerID = `SELECT * FROM tb_ride_details WHERE customer_id=? ORDER BY id DESC LIMIT 1`
 )

@@ -142,14 +142,18 @@ func (ff *FFClient) getAvailableDriverVehicle(ctx context.Context, userLat, user
 	}
 
 	dataMap, driverIds := getGetAvailableDriverMap(ctx, data)
+	if len(driverIds) == 0 {
+		log.Println("[getAvailableDriverVehicle][Error] No Driver available")
+		return driverData, errors.New("No Driver Available")
+	}
+
+	log.Printf("[getAvailableDriverVehicle]Available Drivers:%+v", driverIds)
 
 	vehicles, err := model.TukTuk.GetVehicleByAssignedDriver(ctx, driverIds)
 	if err != nil {
 		log.Println("[getAvailableDriverVehicle][Error] Error in fetching vehicle data", err)
 		return driverData, err
 	}
-
-	log.Printf("vehicles: %+v", vehicles)
 
 	driverData = getGetAvailableVehicles(ctx, vehicles, dataMap, vehicleType)
 
