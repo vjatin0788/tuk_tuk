@@ -108,6 +108,7 @@ func (table RideDetailTabel) InsertRideDetails(ctx context.Context) (int64, erro
 	return id, err
 }
 
+//it should be used if you have all data that need to be updated.
 func (db *DBTuktuk) UpdateRide(ctx context.Context, rideModel RideDetailModel) error {
 	//validations neeed to be inserted here
 	err := rideModel.GetTable().UpdateRideDetails(ctx)
@@ -127,6 +128,31 @@ func (table RideDetailTabel) UpdateRideDetails(ctx context.Context) error {
 	}
 
 	return err
+}
+
+func (db *DBTuktuk) UpdateRideWithStatus(ctx context.Context, rideModel RideDetailModel) (int64, error) {
+	//validations neeed to be inserted here
+	return rideModel.GetTable().UpdateRideDetailsAndStatus(ctx)
+}
+
+func (table RideDetailTabel) UpdateRideDetailsAndStatus(ctx context.Context) (int64, error) {
+
+	var err error
+
+	row, err := statement.UpdateRideDetailsWithStatus.ExecContext(ctx, table.DriverId, table.Status,
+		table.RideBookedTime, table.Id)
+	if err != nil {
+		log.Println("[UpdateRideDetails][Error] Err in inserting", err)
+		return 0, err
+	}
+
+	rowsAffectedCount, err := row.RowsAffected()
+	if err != nil {
+		log.Println("[UpdateRideDetails][Error] Err in getting row affected count", err)
+		return 0, err
+	}
+
+	return rowsAffectedCount, err
 }
 
 func (db *DBTuktuk) GetRideDetailsByRideId(ctx context.Context, id int64) (RideDetailModel, error) {
@@ -177,4 +203,49 @@ func (db *DBTuktuk) GetRideDetailsByCustomerId(ctx context.Context, id int64) (R
 	}
 
 	return rideTable.GetModel(), err
+}
+
+func (db *DBTuktuk) GetRideDetailsByDriverId(ctx context.Context, driverId int64) (RideDetailModel, error) {
+	var (
+		rideTable RideDetailTabel
+		rideModel RideDetailModel
+		err       error
+	)
+
+	//convert into slice
+	row, err := statement.GetRideDetailsByDriverID.QueryxContext(ctx, driverId)
+	if err != nil {
+		log.Println("[GetRideDetailsByDriverId][Error] Err in fetching data from db", err)
+		return rideModel, err
+	}
+
+	for row.Next() {
+		err := row.StructScan(&rideTable)
+		if err != nil {
+			log.Println("[GetRideDetailsByDriverId][Error] Err in scanning row", err)
+			return rideModel, err
+		}
+	}
+
+	return rideTable.GetModel(), err
+}
+
+func (db *DBTuktuk) UpdateRideFail(ctx context.Context, rideModel RideDetailModel) error {
+	//validations neeed to be inserted here
+	err := rideModel.GetTable().UpdateRideDetailsFailedStatus(ctx)
+	return err
+}
+
+func (table RideDetailTabel) UpdateRideDetailsFailedStatus(ctx context.Context) error {
+
+	var err error
+
+	_, err = statement.UpdateRideStatusFailed.ExecContext(ctx, table.Status,
+		table.RideFailedTime, table.Id)
+	if err != nil {
+		log.Println("[UpdateRideDetails][Error] Err in inserting", err)
+		return err
+	}
+
+	return err
 }

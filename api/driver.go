@@ -66,3 +66,44 @@ func (api *APIMod) DriverWebhook(rw http.ResponseWriter, r *http.Request) (inter
 
 	return data, err
 }
+
+func (api *APIMod) DriverBookHandler(rw http.ResponseWriter, r *http.Request) (interface{}, error) {
+	var err error
+
+	ctx := r.Context()
+
+	isBookedStr := r.FormValue("is_booked")
+	isBooked, err := strconv.ParseBool(isBookedStr)
+	if err != nil {
+		log.Println("[DriverBookHandler][Error] Err parsing is booked", err)
+		return nil, errors.New("Error Parsing IS BOOKED")
+	}
+
+	rideIdStr := r.FormValue("ride_id")
+	rideId, err := strconv.ParseInt(rideIdStr, 10, 64)
+	if err != nil {
+		log.Println("[DriverBookHandler][Error] Err parsing ride id", err)
+		return nil, errors.New("Error Parsing Ride ID")
+	}
+
+	userid := r.Header.Get("User-Id")
+	if userid == "" {
+		log.Println("[DriverBookHandler][Error] empty user id")
+		return nil, errors.New("Empty User ID")
+	}
+
+	uid, err := strconv.ParseInt(userid, 10, 64)
+	if err != nil {
+		log.Println("[DriverBookHandler][Error] Parsing int")
+		return nil, errors.New("Error parsing int")
+	}
+
+	data, err := fulfilment.FF.DriverBooked(ctx, uid, rideId, isBooked)
+	if err != nil {
+		log.Println("[DriverBookHandler][Error] Err in request ride", err)
+
+		return nil, err
+	}
+
+	return data, err
+}

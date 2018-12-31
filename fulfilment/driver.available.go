@@ -155,6 +155,8 @@ func (ff *FFClient) getAvailableDriverVehicle(ctx context.Context, userLat, user
 		return driverData, err
 	}
 
+	log.Printf("[getAvailableDriverVehicle]Available Drivers after vehicles filter:%+v", vehicles)
+
 	driverData = getGetAvailableVehicles(ctx, vehicles, dataMap, vehicleType)
 
 	return driverData, err

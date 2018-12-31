@@ -17,7 +17,6 @@ func (mps *GMClient) GetDistance(ctx context.Context, destination, origin string
 	var (
 		defaultResp DistanceMatrix
 		err         error
-		mode        string
 	)
 
 	if destination == "" || origin == "" {
@@ -25,9 +24,7 @@ func (mps *GMClient) GetDistance(ctx context.Context, destination, origin string
 		return defaultResp, errors.New("Empty destination or origin")
 	}
 
-	mode = "Driving"
-
-	data, err := mps.prepareGetDistanceRequest(ctx, destination, origin, mode)
+	data, err := mps.prepareGetDistanceRequest(ctx, destination, origin, common.DRIVING_MODE)
 	if err != nil {
 		log.Println("[PrepareGetDistanceRequest][Error]Err creating req ", err)
 		return defaultResp, err

@@ -78,9 +78,25 @@ func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, 
 	log.Println("RIDE CREATED, RIDE ID#:", rideId)
 	ride.Id = rideId
 
-	resp, err = ff.findDriver(ctx, &ride, vehicleType)
-	if err != nil {
-		return nil, err
+	resp, finderr := ff.findDriver(ctx, &ride, vehicleType)
+	if finderr != nil {
+		//any error beyond this mark ride as fail in db
+		log.Println("[rideResponse][Error] Ride Failed .setting ride status failed")
+
+		err := ff.RideStateTransition(ctx, &ride, common.RideStatus.FAILED.ID)
+		if err != nil {
+			log.Println("[rideResponse][Error] Err in state transition", err)
+			return nil, err
+		}
+
+		ride.RideFailedTime = time.Now().UTC().String()
+
+		err = model.TukTuk.UpdateRideFail(ctx, ride)
+		if err != nil {
+			log.Println("[rideResponse][Error] Err in updating db", err)
+		}
+
+		return nil, finderr
 	}
 
 	return resp, err
@@ -91,6 +107,11 @@ func (ff *FFClient) findDriver(ctx context.Context, ride *model.RideDetailModel,
 		err error
 	)
 
+	defaultRes := &RideBookResponse{
+		Message: "No Driver Found",
+		RideId:  ride.Id,
+	}
+
 	if ride.SourceLat == 0 || ride.SourceLong == 0 {
 		log.Println("[FindDriver][Error] Err Lat long")
 		return nil, errors.New("Empty Lat long")
@@ -99,6 +120,11 @@ func (ff *FFClient) findDriver(ctx context.Context, ride *model.RideDetailModel,
 	drivers, err := ff.getAvailableDriverVehicle(ctx, ride.SourceLat, ride.SourceLong, vehicleType)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(drivers) == 0 {
+		log.Println("[FindDriver] Not Driver available for given vehicle type")
+		return defaultRes, err
 	}
 
 	log.Printf("vehicles: %+v", drivers)
@@ -144,7 +170,7 @@ func (ff *FFClient) rideResponse(ctx context.Context, driverId int64, ride *mode
 
 		ride.RideFailedTime = time.Now().UTC().String()
 
-		err = model.TukTuk.UpdateRide(ctx, *ride)
+		err = model.TukTuk.UpdateRideFail(ctx, *ride)
 		if err != nil {
 			return nil, err
 		}
@@ -256,8 +282,14 @@ func (ff *FFClient) RideStateTransition(ctx context.Context, ride *model.RideDet
 		} else {
 			err = errors.New("Invalid state for booking ride")
 		}
-	case common.RideStatus.COMPLETED.ID:
+	case common.RideStatus.PROCESSING.ID:
 		if ride.Status == 2 {
+			ride.Status = common.RideStatus.BOOKED.ID
+		} else {
+			err = errors.New("Invalid state for Processing ride")
+		}
+	case common.RideStatus.COMPLETED.ID:
+		if ride.Status == 3 {
 			ride.Status = common.RideStatus.COMPLETED.ID
 		} else {
 			err = errors.New("Invalid state for complete ride")
@@ -283,28 +315,34 @@ func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverDa
 
 	for idx, driver := range drivers {
 
-		//first check should be skipped.
-		if idx > 0 {
-			rideUpdated, err = model.TukTuk.GetRideDetailsByRideId(ctx, ride.Id)
-			if err != nil {
-				log.Println("[sendPushNotification][Error] Error in fetching data", err)
-				return res, err
-			}
-
-			if rideUpdated.Status == common.RideStatus.BOOKED.ID {
-				log.Printf("Ride booked for ride id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
-				break
-			}
-		}
-
-		//Sending push notification for 20 sec.
 		if !ff.checkIfDriverLocValid(ctx, ride, driver) {
 			log.Printf("[sendPushNotification] Driver location not valid to send push notification, skipping id: %d", driver.Id)
 			continue
 		}
 
 		log.Printf("Sending Push notification to driver id:%d", driver.Id)
+		//Sending push notification for 20 sec.
 		time.Sleep(common.TIME_SLEEP)
+
+		rideUpdated, err = model.TukTuk.GetRideDetailsByRideId(ctx, ride.Id)
+		if err != nil {
+			log.Println("[sendPushNotification][Error] Error in fetching data", err)
+			return res, err
+		}
+
+		if rideUpdated.Status == common.RideStatus.BOOKED.ID {
+
+			if !ff.checkIfDriverBookedIsValid(ctx, rideUpdated.DriverId, drivers[:idx+1]) {
+				log.Printf("Driver booked for ride id:%d , driver id:%d , is not valid does not lies in range. %+v", ride.Id, rideUpdated.DriverId, drivers[:idx+1])
+				log.Printf("Sending Push notification to wrong driver and cancel it's ride. id:%d", driver.Id)
+				return res, errors.New("Invalid Driver Booked")
+			}
+
+			log.Printf("RIDE BOOKED  for ride id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
+
+			break
+		}
+
 	}
 
 	res = rideUpdated.DriverId
@@ -335,4 +373,18 @@ func (ff *FFClient) checkIfDriverLocValid(ctx context.Context, ride *model.RideD
 	log.Printf("[checkIfDriverLocValid] driver result:%+v", driverModel)
 
 	return ff.liesInCustomerArea(ctx, ride.SourceLat, ride.SourceLong, driverModel.CurrentLatitude, driverModel.CurrentLongitude)
+}
+
+func (ff *FFClient) checkIfDriverBookedIsValid(ctx context.Context, driverId int64, drivers []DriverData) bool {
+
+	var isValid bool
+
+	for _, driver := range drivers {
+		if driverId == driver.Id {
+			isValid = true
+			break
+		}
+	}
+
+	return isValid
 }

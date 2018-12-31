@@ -28,6 +28,7 @@ type CustomerModel struct {
 	EmailVerified  string `db:"email_verified" json:"email_verified"`
 	MobileOtp      string `db:"mobile_otp" json:"mobile_otp"`
 	EmailOtp       string `db:"email_otp" json:"email_otp"`
+	DeviceId       string `db:"device_id" json:"device_id"`
 }
 
 type CustomerTable struct {
@@ -52,6 +53,7 @@ type CustomerTable struct {
 	EmailVerified  sql.NullString `db:"email_verified" json:"email_verified"`
 	MobileOtp      sql.NullString `db:"mobile_otp" json:"mobile_otp"`
 	EmailOtp       sql.NullString `db:"email_otp" json:"email_otp"`
+	DeviceId       sql.NullString `db:"device_id" json:"device_id"`
 }
 
 func (table CustomerTable) GetModel() CustomerModel {
@@ -77,6 +79,7 @@ func (table CustomerTable) GetModel() CustomerModel {
 		MobileVerified: table.MobileVerified.String,
 		EmailOtp:       table.EmailOtp.String,
 		MobileOtp:      table.MobileOtp.String,
+		DeviceId:       table.DeviceId.String,
 	}
 }
 
@@ -103,6 +106,7 @@ func (model CustomerModel) GetTable() CustomerTable {
 		MobileVerified: sql.NullString{model.MobileVerified, false},
 		EmailOtp:       sql.NullString{model.EmailOtp, false},
 		MobileOtp:      sql.NullString{model.MobileOtp, false},
+		DeviceId:       sql.NullString{model.DeviceId, false},
 	}
 }
 
@@ -116,6 +120,26 @@ func (db *DBTuktuk) GetCustomerByToken(ctx context.Context, authToken string) (C
 	err = statement.GetCustomerByAuth.SelectContext(ctx, &custTable, authToken)
 	if err != nil {
 		log.Println("[GetCustomerByToken][Error] Err in fetching data from db", err)
+		return custModel, err
+	}
+
+	for _, cust := range custTable {
+		custModel = cust.GetModel()
+	}
+
+	return custModel, nil
+}
+
+func (db *DBTuktuk) GetCustomerById(ctx context.Context, id int64) (CustomerModel, error) {
+	var (
+		custModel CustomerModel
+		custTable []CustomerTable
+		err       error
+	)
+
+	err = statement.GetCustomerById.SelectContext(ctx, &custTable, id)
+	if err != nil {
+		log.Println("[GetCustomerById][Error] Err in fetching data from db", err)
 		return custModel, err
 	}
 

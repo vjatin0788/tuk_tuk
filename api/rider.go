@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/TukTuk/authentication"
 	"github.com/TukTuk/lib"
 
 	"github.com/TukTuk/fulfilment"
@@ -23,34 +22,34 @@ func (api *APIMod) DriverAvailableHandler(rw http.ResponseWriter, r *http.Reques
 
 	vehicleType := r.FormValue("vehicle_type")
 
-	userid := r.Header.Get("User-Id")
-	if userid == "" {
-		log.Println("[DriverAvailableHandler][Error] empty user id")
-		return nil, errors.New("Empty User ID")
-	}
+	// userid := r.Header.Get("User-Id")
+	// if userid == "" {
+	// 	log.Println("[DriverAvailableHandler][Error] empty user id")
+	// 	return nil, errors.New("Empty User ID")
+	// }
 
-	uid, err := strconv.ParseInt(userid, 10, 64)
-	if err != nil {
-		log.Println("[DriverAvailableHandler][Error] Parsing int")
-		return nil, errors.New("Err parsing int")
-	}
+	// uid, err := strconv.ParseInt(userid, 10, 64)
+	// if err != nil {
+	// 	log.Println("[DriverAvailableHandler][Error] Parsing int")
+	// 	return nil, errors.New("Err parsing int")
+	// }
 
-	authToken := r.Header.Get("TUKTUK_TOKEN")
-	if authToken == "" {
-		log.Println("[DriverAvailableHandler][Error] empty token")
-		return nil, errors.New("Empty Auth Token")
-	}
+	// authToken := r.Header.Get("TUKTUK_TOKEN")
+	// if authToken == "" {
+	// 	log.Println("[DriverAvailableHandler][Error] empty token")
+	// 	return nil, errors.New("Empty Auth Token")
+	// }
 
-	user, err := authentication.Auth.Authentication(ctx, true, false, authToken)
-	if err != nil {
-		log.Println("[DriverAvailableHandler][Error] Error in fetching authentication details", err)
-		return nil, err
-	}
+	// user, err := authentication.Auth.Authentication(ctx, true, false, authToken)
+	// if err != nil {
+	// 	log.Println("[DriverAvailableHandler][Error] Error in fetching authentication details", err)
+	// 	return nil, err
+	// }
 
-	if user.Customer.Id != uid {
-		log.Printf("[DriverAvailableHandler][Error] User id mismatch required: %d, found: %d", uid, user.Driver.Id)
-		return nil, errors.New("User Id mismatch")
-	}
+	// if user.Customer.Id != uid {
+	// 	log.Printf("[DriverAvailableHandler][Error] User id mismatch required: %d, found: %d", uid, user.Driver.Id)
+	// 	return nil, errors.New("User Id mismatch")
+	// }
 
 	data, err := fulfilment.FF.DriverAvailable(ctx, latVal, longVal, vehicleType)
 	if err != nil {
@@ -97,6 +96,7 @@ func (api *APIMod) RequestRide(rw http.ResponseWriter, r *http.Request) (interfa
 	data, err := fulfilment.FF.RequestRide(ctx, uid, sourceVal[0], sourceVal[1], destVal[0], destVal[1], vehicleType)
 	if err != nil {
 		log.Println("[RequestRide][Error] Err in request ride", err)
+
 		return nil, err
 	}
 

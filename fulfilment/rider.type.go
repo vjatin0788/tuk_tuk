@@ -30,3 +30,16 @@ type DriverData struct {
 	Distance int64
 	DeviceId string
 }
+
+type DriverBookedResponse struct {
+	RiderDetail CustomerDetailsResponse `json:"ride_details"`
+	CurrentLat  float64                 `json:"current_lat"`
+	CurrentLong float64                 `json:"current_long"`
+	RideId      int64                   `json:"ride_id"`
+	Message     string                  `json:"message"`
+}
+
+type CustomerDetailsResponse struct {
+	CustomerId int64  `json:"customer_id"`
+	Name       string `json:name`
+}

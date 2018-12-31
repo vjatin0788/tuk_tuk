@@ -45,6 +45,7 @@ type DriverUserModel struct {
 	Driverdutystatus                string `db:"driver_duty_status" json:"driver_duty_status"`
 	Name                            string `db:"name" json:"name"`
 	DeviceId                        string `db:"device_id" json:"device_id"`
+	Refferal                        int64  `db:"refferal" json:"refferal"`
 }
 
 type DriverUserTable struct {
@@ -86,6 +87,7 @@ type DriverUserTable struct {
 	Driverdutystatus                sql.NullString `db:"driver_duty_status" json:"driver_duty_status"`
 	Name                            sql.NullString `db:"name" json:"name"`
 	DeviceId                        string         `db:"device_id" json:"device_id"`
+	Refferal                        sql.NullInt64  `db:"refferal" json:"refferal"`
 }
 
 func (table DriverUserTable) GetModel() DriverUserModel {
@@ -128,6 +130,7 @@ func (table DriverUserTable) GetModel() DriverUserModel {
 		Driverdutystatus:                table.Driverdutystatus.String,
 		Name:                            table.Name.String,
 		DeviceId:                        table.DeviceId,
+		Refferal:                        table.Refferal.Int64,
 	}
 }
 
@@ -171,6 +174,7 @@ func (model DriverUserModel) GetTable() DriverUserTable {
 		Driverdutystatus:                sql.NullString{model.Driverdutystatus, false},
 		Name:                            sql.NullString{model.Name, false},
 		DeviceId:                        model.DeviceId,
+		Refferal:                        sql.NullInt64{model.Refferal, false},
 	}
 }
 
