@@ -1,13 +1,17 @@
 package core
 
 import (
+	"time"
+
 	"github.com/TukTuk/common"
 )
 
 var CF *Config
 
 type Config struct {
-	Maps GMaps
+	Server   ServerConfig
+	Maps     GMaps
+	FireBase FBase
 }
 
 type GMaps struct {
@@ -15,11 +19,25 @@ type GMaps struct {
 	ApiKey   string
 }
 
+type FBase struct {
+	ApiKey string
+}
+
+type ServerConfig struct {
+	RideRequestTime time.Duration
+}
+
 func InitConfig() *Config {
 	CF = &Config{
 		Maps: GMaps{
 			Hostname: GMAPS_SERVICE_HOSTNAME,
 			ApiKey:   common.API_KEY,
+		},
+		FireBase: FBase{
+			ApiKey: FIREBASE_KEY,
+		},
+		Server: ServerConfig{
+			RideRequestTime: RIDE_REQUEST_TIME,
 		},
 	}
 	return CF

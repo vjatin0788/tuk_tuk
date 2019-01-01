@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/TukTuk/firebase"
+
 	"github.com/TukTuk/core"
 	"github.com/TukTuk/fulfilment"
 
@@ -25,6 +27,8 @@ func main() {
 	if err != nil {
 		log.Fatal("DB Initialization failed")
 	}
+
+	firebase.InitFireBase(cfg)
 
 	authentication.InitAuth()
 	fulfilment.InitFF(cfg)

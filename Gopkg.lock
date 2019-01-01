@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "github.com/NaySoftware/go-fcm"
+  packages = ["."]
+  revision = "28fff9381d17f35619309c7a5ada41d26030d976"
+
+[[projects]]
   name = "github.com/go-sql-driver/mysql"
   packages = ["."]
   revision = "72cd26f257d44c1114970e19afddcd812016007e"
@@ -58,6 +64,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "dbd670e5b19edc76f6c5b7586eeeab393e079528af2eff2865d3b4b5b686ca81"
+  inputs-digest = "3f482faecdcd3502fb1c5fe6af6f0727f380b5d4e2a6377ba88b2803b94f2905"
   solver-name = "gps-cdcl"
   solver-version = 1

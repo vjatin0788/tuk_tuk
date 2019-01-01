@@ -33,6 +33,8 @@ func (ff *FFClient) DriverBooked(ctx context.Context, userId, rideId int64, isBo
 		return nil, err
 	}
 
+	log.Printf("[DriverBooked] Ride Details:%+v", rideDetail)
+
 	if rideId != rideDetail.Id {
 		log.Println("[DriverBooked][Error] Invalid Ride id", rideId)
 		return nil, errors.New("Invalid Ride ID.")
@@ -41,8 +43,8 @@ func (ff *FFClient) DriverBooked(ctx context.Context, userId, rideId int64, isBo
 	//check whether request is accepted or declined.
 	if !isBooked {
 		// marking driver Cancelled.
-		//we can add more analysis about how many rides cancelled by driver
-		log.Println("[RequestRide] Driver Declined the request for ride id:", rideId)
+		//we can add more analysis about how many rides cancelled by driver.
+		log.Println("[DriverBooked] Driver Declined the request for ride id:", rideId)
 		return defaultRes, err
 	}
 
@@ -58,7 +60,7 @@ func (ff *FFClient) prepareRideForDriver(ctx context.Context, userId int64, ride
 		return nil, errors.New("Something Went Wrong")
 	}
 
-	//check if driver already aloted to ride or not.
+	//check if driver already aloted to current ride or not.
 	if ride.DriverId > 0 {
 		if ride.Status < common.RideStatus.BOOKED.ID {
 			log.Println("[prepareRideForDriver] Driver Found but status mismatch", ride.Status)
@@ -75,6 +77,8 @@ func (ff *FFClient) prepareRideForDriver(ctx context.Context, userId int64, ride
 		return nil, err
 	}
 
+	log.Printf("[prepareRideForDriver] Ride Details of driver id:%d , details:%+v", ride.Id, rdData)
+
 	if rdData.Status >= common.RideStatus.BOOKED.ID && rdData.Status < common.RideStatus.COMPLETED.ID {
 		log.Println("[prepareRideForDriver] Driver already booked with some other ride", rdData.Status)
 		return nil, errors.New("Driver already on ride")
@@ -86,8 +90,6 @@ func (ff *FFClient) prepareRideForDriver(ctx context.Context, userId int64, ride
 		log.Printf("[prepareRideForDriver][Error] Ride state Transitiion:%s, ride state:%d", err, ride.Status)
 		return nil, err
 	}
-
-	log.Printf("[prepareRideForDriver] RIDE BOOKED FOR DRIVER:%d, RIDE ID:%d", userId, ride.Id)
 
 	//Alot driver for ride ID.
 	rideUpdated, err := ff.alotDriverForRide(ctx, userId, ride)
@@ -115,6 +117,8 @@ func (ff *FFClient) prepareDriverBookedResponse(ctx context.Context, ride *model
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("[prepareDriverBookedResponse]Customer Data found:%d, id: %d", userData, ride.CustomerId)
 
 	if userData.CustomerId != ride.CustomerId {
 		log.Printf("[prepareDriverBookedResponse][Error] Invalid customer id. found:%d, req: %d", userData.CustomerId, ride.CustomerId)
@@ -150,8 +154,10 @@ func (ff *FFClient) alotDriverForRide(ctx context.Context, userId int64, ride *m
 		return nil, err
 	}
 
+	log.Printf("[validateAndUpdateRideStatus]Driver data :%d, driver id:%d", ddata, userId)
+
 	if ddata.Userid != userId {
-		log.Println("[alotDriverForRide][Error] User ID Mismatch")
+		log.Println("[validateAndUpdateRideStatus][Error] User ID Mismatch")
 		return nil, errors.New("User ID Mismatch")
 	}
 
@@ -168,6 +174,8 @@ func (ff *FFClient) alotDriverForRide(ctx context.Context, userId int64, ride *m
 		log.Println("[validateAndUpdateRideStatus][Error] Ride is not in valid state db,Row Affected:", rowAffectedCount)
 		return nil, errors.New("Driver Already Booked or Something went wrong")
 	}
+
+	log.Printf("RIDE BOOKED FOR DRIVER:%d, RIDE ID:%d", userId, ride.Id)
 
 	return ride, nil
 }

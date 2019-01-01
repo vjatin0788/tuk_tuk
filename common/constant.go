@@ -8,9 +8,10 @@ const (
 	API_KEY          = ""
 	METHOD_GET       = "GET"
 	METHOD_POST      = "POST"
-	TIME_SLEEP       = 20 * time.Second
+	TIME_SLEEP       = 10 * time.Second
 	DRIVER_CANCELLED = 1
 	RIDER_CANCELLED  = 1
+	T
 )
 
 //Endpoints

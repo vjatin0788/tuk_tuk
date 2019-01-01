@@ -9,6 +9,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/TukTuk/firebase"
 	"github.com/TukTuk/lib"
 
 	"github.com/TukTuk/common"
@@ -313,6 +314,9 @@ func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverDa
 		err         error
 	)
 
+	//configure time for sending notification. It should not be more than 90 seconds.
+	startTime := time.Now()
+
 	for idx, driver := range drivers {
 
 		if !ff.checkIfDriverLocValid(ctx, ride, driver) {
@@ -321,7 +325,9 @@ func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverDa
 		}
 
 		log.Printf("Sending Push notification to driver id:%d", driver.Id)
-		//Sending push notification for 20 sec.
+		//Sending push notification.
+		go ff.sendNotification(ctx, ride, driver)
+		//Wait for 10 sec before sending another notification
 		time.Sleep(common.TIME_SLEEP)
 
 		rideUpdated, err = model.TukTuk.GetRideDetailsByRideId(ctx, ride.Id)
@@ -334,12 +340,20 @@ func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverDa
 
 			if !ff.checkIfDriverBookedIsValid(ctx, rideUpdated.DriverId, drivers[:idx+1]) {
 				log.Printf("Driver booked for ride id:%d , driver id:%d , is not valid does not lies in range. %+v", ride.Id, rideUpdated.DriverId, drivers[:idx+1])
+
 				log.Printf("Sending Push notification to wrong driver and cancel it's ride. id:%d", driver.Id)
+				go ff.sendInvalidDriverNotification(ctx, &rideUpdated)
+
 				return res, errors.New("Invalid Driver Booked")
 			}
 
 			log.Printf("RIDE BOOKED  for ride id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
 
+			break
+		}
+
+		if ff.Cfg.Server.RideRequestTime < time.Since(startTime) {
+			log.Printf("[sendPushNotification] Request Time out.", time.Since(startTime).Seconds)
 			break
 		}
 
@@ -365,14 +379,14 @@ func (ff *FFClient) liesInCustomerArea(ctx context.Context, sLat, sLong, dLat, d
 
 func (ff *FFClient) checkIfDriverLocValid(ctx context.Context, ride *model.RideDetailModel, driver DriverData) bool {
 
-	driverModel, err := model.TukTuk.GetDriverById(ctx, driver.Id)
+	driverTrackModel, err := model.TukTuk.GetDriverById(ctx, driver.Id)
 	if err != nil {
 		log.Println("[checkIfDriverLocValid][Error] Error in fetching data", err)
 	}
 
-	log.Printf("[checkIfDriverLocValid] driver result:%+v", driverModel)
+	log.Printf("[checkIfDriverLocValid] driver result:%+v", driverTrackModel)
 
-	return ff.liesInCustomerArea(ctx, ride.SourceLat, ride.SourceLong, driverModel.CurrentLatitude, driverModel.CurrentLongitude)
+	return ff.liesInCustomerArea(ctx, ride.SourceLat, ride.SourceLong, driverTrackModel.CurrentLatitude, driverTrackModel.CurrentLongitude)
 }
 
 func (ff *FFClient) checkIfDriverBookedIsValid(ctx context.Context, driverId int64, drivers []DriverData) bool {
@@ -387,4 +401,36 @@ func (ff *FFClient) checkIfDriverBookedIsValid(ctx context.Context, driverId int
 	}
 
 	return isValid
+}
+
+func (ff *FFClient) sendNotification(ctx context.Context, ride *model.RideDetailModel, driver DriverData) {
+
+	fbclient := firebase.FClient
+
+	data := map[string]string{
+		"ride_id":          fmt.Sprintf("%d", ride.Id),
+		"source_lat":       fmt.Sprintf("%f", ride.SourceLat),
+		"source_long":      fmt.Sprintf("%f", ride.SourceLong),
+		"destination_lat":  fmt.Sprintf("%f", ride.DestinationLat),
+		"destination_long": fmt.Sprintf("%f", ride.DestinationLong),
+	}
+
+	fbclient.AddId(ctx, driver.DeviceId).SendPushNotification(ctx, data)
+}
+
+func (ff *FFClient) sendInvalidDriverNotification(ctx context.Context, ride *model.RideDetailModel) {
+
+	fbclient := firebase.FClient
+
+	ddata, err := model.TukTuk.GetDriverUserById(ctx, ride.DriverId)
+	if err != nil {
+		log.Println("[rideResponse][Error] DB error", err)
+	}
+
+	data := map[string]string{
+		"ride_id": fmt.Sprintf("%d", ride.Id),
+		"message": "Ride Cancelled. Invalid Ride.",
+	}
+
+	fbclient.AddId(ctx, ddata.DeviceId).SendPushNotification(ctx, data)
 }

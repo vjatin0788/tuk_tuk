@@ -120,11 +120,14 @@ func getGetAvailableVehicles(ctx context.Context, vehicles []model.VehicleModel,
 
 	for _, vehicle := range vehicles {
 		if val, ok := driverMap[vehicle.AssignedDriverId]; ok {
+			log.Printf("Vehicle type found:%s, required:%s for vehicle id:%d", vehicle.VehicleType, vehicleType, val.ID)
 			if vehicleType == vehicle.VehicleType {
 				driverModel = append(driverModel, val)
 			}
 		}
 	}
+
+	log.Printf("[getGetAvailableVehicles] Available Driver Data. :%+v , vehicle type:%s", driverModel, vehicleType)
 
 	return driverModel
 }
