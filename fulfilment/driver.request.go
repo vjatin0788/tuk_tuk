@@ -118,7 +118,7 @@ func (ff *FFClient) prepareDriverBookedResponse(ctx context.Context, ride *model
 		return nil, err
 	}
 
-	log.Printf("[prepareDriverBookedResponse]Customer Data found:%d, id: %d", userData, ride.CustomerId)
+	log.Printf("[prepareDriverBookedResponse]Customer Data found:%+v, id: %d", userData, ride.CustomerId)
 
 	if userData.CustomerId != ride.CustomerId {
 		log.Printf("[prepareDriverBookedResponse][Error] Invalid customer id. found:%d, req: %d", userData.CustomerId, ride.CustomerId)
@@ -177,5 +177,13 @@ func (ff *FFClient) alotDriverForRide(ctx context.Context, userId int64, ride *m
 
 	log.Printf("RIDE BOOKED FOR DRIVER:%d, RIDE ID:%d", userId, ride.Id)
 
-	return ride, nil
+	log.Printf("NOTIFYING RIDER. DriverBookedNotifiedMap map:%+v", DriverBookedNotifiedMap)
+	if val, ok := DriverBookedNotifiedMap[ride.Id]; ok {
+		val <- common.NOTIFY_RIDER
+	} else {
+		//Register in NSQ
+		log.Println("[validateAndUpdateRideStatus][Error] Error in getting value from map.Unable to notify.")
+	}
+
+	return ride, err
 }

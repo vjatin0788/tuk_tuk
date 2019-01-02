@@ -43,3 +43,5 @@ type CustomerDetailsResponse struct {
 	CustomerId int64  `json:"customer_id"`
 	Name       string `json:name`
 }
+
+var DriverBookedNotifiedMap map[int64]chan bool
