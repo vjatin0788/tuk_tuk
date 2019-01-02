@@ -12,4 +12,6 @@ func InitFF(cfg *core.Config) {
 	FF = &FFClient{
 		Cfg: cfg,
 	}
+
+	DriverBookedNotifiedMap = make(map[int64]chan bool)
 }

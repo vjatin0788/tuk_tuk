@@ -314,9 +314,15 @@ func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverDa
 		err         error
 	)
 
+	//adding ride to driver map.
+	riderChan := make(chan bool)
+	DriverBookedNotifiedMap[ride.Id] = riderChan
+	log.Printf("[sendPushNotification] DriverBookedNotifiedMap map:%+v", DriverBookedNotifiedMap)
+
 	//configure time for sending notification. It should not be more than 90 seconds.
 	startTime := time.Now()
 
+driverLoop:
 	for idx, driver := range drivers {
 
 		if !ff.checkIfDriverLocValid(ctx, ride, driver) {
@@ -327,28 +333,32 @@ func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverDa
 		log.Printf("Sending Push notification to driver id:%d", driver.Id)
 		//Sending push notification.
 		go ff.sendNotification(ctx, ride, driver)
-		//Wait for 10 sec before sending another notification
-		time.Sleep(common.TIME_SLEEP)
 
-		rideUpdated, err = model.TukTuk.GetRideDetailsByRideId(ctx, ride.Id)
-		if err != nil {
-			log.Println("[sendPushNotification][Error] Error in fetching data", err)
-			return res, err
-		}
+		select {
+		case <-riderChan:
+			log.Printf("Booking recieved for id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
 
-		if rideUpdated.Status == common.RideStatus.BOOKED.ID {
-
-			if !ff.checkIfDriverBookedIsValid(ctx, rideUpdated.DriverId, drivers[:idx+1]) {
-				log.Printf("Driver booked for ride id:%d , driver id:%d , is not valid does not lies in range. %+v", ride.Id, rideUpdated.DriverId, drivers[:idx+1])
-
-				log.Printf("Sending Push notification to wrong driver and cancel it's ride. id:%d", driver.Id)
-				go ff.sendInvalidDriverNotification(ctx, &rideUpdated)
-
-				return res, errors.New("Invalid Driver Booked")
+			rideUpdated, err = model.TukTuk.GetRideDetailsByRideId(ctx, ride.Id)
+			if err != nil {
+				log.Println("[sendPushNotification][Error] Error in fetching data", err)
+				return res, err
 			}
 
-			log.Printf("RIDE BOOKED  for ride id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
+			if rideUpdated.Status == common.RideStatus.BOOKED.ID {
 
+				if !ff.checkIfDriverBookedIsValid(ctx, rideUpdated.DriverId, drivers[:idx+1]) {
+					log.Printf("Driver booked for ride id:%d , driver id:%d , is not valid does not lies in range. %+v", ride.Id, rideUpdated.DriverId, drivers[:idx+1])
+
+					log.Printf("Sending Push notification to wrong driver and cancel it's ride. id:%d", driver.Id)
+					go ff.sendInvalidDriverNotification(ctx, &rideUpdated)
+
+					return res, errors.New("Invalid Driver Booked")
+				}
+				log.Printf("RIDE BOOKED  for ride id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
+			}
+			break driverLoop
+		case <-time.After(20 * time.Second):
+			log.Printf("No Driver booked yet for id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
 			break
 		}
 

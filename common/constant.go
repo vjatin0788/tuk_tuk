@@ -11,7 +11,7 @@ const (
 	TIME_SLEEP       = 10 * time.Second
 	DRIVER_CANCELLED = 1
 	RIDER_CANCELLED  = 1
-	T
+	NOTIFY_RIDER     = true
 )
 
 //Endpoints
