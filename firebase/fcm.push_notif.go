@@ -52,10 +52,10 @@ func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}) 
 		return errors.New("Statuscode mismatch")
 	}
 
-	if resp.Fail > 0 {
-		log.Println("[SendPushNotification][Error]Failed to send notification ", resp.Fail)
-		return errors.New("Fail TO send Notification")
-	}
+	// if resp.Fail > 0 {
+	// 	log.Println("[SendPushNotification][Error]Failed to send notification ", resp.Fail)
+	// 	return errors.New("Fail TO send Notification")
+	// }
 
 	log.Printf("Resp :%+v", resp)
 	return err

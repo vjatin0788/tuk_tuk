@@ -30,6 +30,7 @@ func (ff *FFClient) RequestRide(ctx context.Context, customerID int64, sLat, sLo
 
 	log.Println("[RequestRide] Ride :", ride.Status)
 
+	//add go routine to automatically make status=1 to status=5
 	//only new ride or first ride is allowed
 	if ride.Status == common.RideStatus.REQUESTED.ID || ride.Status == common.RideStatus.BOOKED.ID {
 		return nil, errors.New("Ride Invalid state")
@@ -129,8 +130,6 @@ func (ff *FFClient) findDriver(ctx context.Context, ride *model.RideDetailModel,
 		log.Println("[FindDriver] Not Driver available for given vehicle type")
 		return defaultRes, err
 	}
-
-	log.Printf("Available Drivers: %+v", drivers)
 
 	//preparing destination and source for gmaps
 	destination := ff.prepareDestinationForGmaps(ctx, drivers)
@@ -254,8 +253,9 @@ func (ff *FFClient) getDriversData(ctx context.Context, distances maps.DistanceM
 
 			if strings.EqualFold(ddata.Status, common.STATUS_ACTIVATE) {
 				drivers = append(drivers, DriverData{
-					Id:       driverModel[idx].DriverID,
+					Id:       ddata.Userid,
 					Distance: element.Distance.Value,
+					DeviceId: ddata.DeviceId,
 				})
 			}
 		}
@@ -304,7 +304,7 @@ func (ff *FFClient) RideStateTransition(ctx context.Context, ride *model.RideDet
 		}
 	case common.RideStatus.PROCESSING.ID:
 		if ride.Status == 2 {
-			ride.Status = common.RideStatus.BOOKED.ID
+			ride.Status = common.RideStatus.PROCESSING.ID
 		} else {
 			err = errors.New("Invalid state for Processing ride")
 		}
@@ -344,6 +344,11 @@ func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverDa
 driverLoop:
 	for idx, driver := range drivers {
 
+		if ff.Cfg.Server.RideRequestTime < time.Since(startTime) {
+			log.Printf("[sendPushNotification] Request Time out.", time.Since(startTime).Seconds)
+			break
+		}
+
 		if !ff.checkIfDriverLocValid(ctx, ride, driver) {
 			log.Printf("[sendPushNotification] Driver location not valid to send push notification, skipping id: %d", driver.Id)
 			continue
@@ -363,15 +368,17 @@ driverLoop:
 				return res, err
 			}
 
+			updatedDriverId := rideUpdated.DriverId
+
 			if rideUpdated.Status == common.RideStatus.BOOKED.ID {
 
-				if !ff.checkIfDriverBookedIsValid(ctx, rideUpdated.DriverId, drivers[:idx+1]) {
+				if !ff.checkIfDriverBookedIsValid(ctx, &rideUpdated, drivers[:idx+1]) {
 					log.Printf("Driver booked for ride id:%d , driver id:%d , is not valid does not lies in range. %+v", ride.Id, rideUpdated.DriverId, drivers[:idx+1])
 
-					log.Printf("Sending Push notification to wrong driver and cancel it's ride. id:%d", rideUpdated.DriverId)
-					ff.sendInvalidDriverNotification(ctx, &rideUpdated)
+					log.Printf("Sending Push notification to wrong driver and cancel it's ride. id:%d", updatedDriverId)
+					ff.sendInvalidDriverNotification(ctx, updatedDriverId, &rideUpdated)
 
-					return res, errors.New("Invalid Driver Booked")
+					break
 				}
 				log.Printf("RIDE BOOKED  for ride id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
 			}
@@ -380,12 +387,6 @@ driverLoop:
 			log.Printf("No Driver booked yet for id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
 			break
 		}
-
-		if ff.Cfg.Server.RideRequestTime < time.Since(startTime) {
-			log.Printf("[sendPushNotification] Request Time out.", time.Since(startTime).Seconds)
-			break
-		}
-
 	}
 
 	res = rideUpdated.DriverId
@@ -418,15 +419,33 @@ func (ff *FFClient) checkIfDriverLocValid(ctx context.Context, ride *model.RideD
 	return ff.liesInCustomerArea(ctx, ride.SourceLat, ride.SourceLong, driverTrackModel.CurrentLatitude, driverTrackModel.CurrentLongitude)
 }
 
-func (ff *FFClient) checkIfDriverBookedIsValid(ctx context.Context, driverId int64, drivers []DriverData) bool {
+func (ff *FFClient) checkIfDriverBookedIsValid(ctx context.Context, ride *model.RideDetailModel, drivers []DriverData) bool {
 
 	var isValid bool
 
 	for _, driver := range drivers {
-		if driverId == driver.Id {
+		if ride.DriverId == driver.Id {
 			isValid = true
 			break
 		}
+	}
+
+	if !isValid {
+		log.Println("[checkIfDriverBookedIsValid]Invalid Driver.Setting ride status to requsted and driver id to 0.")
+		ride.Status = common.RideStatus.REQUESTED.ID
+		ride.DriverId = 0
+
+		log.Printf("[checkIfDriverBookedIsValid]ride details:%+v", ride)
+
+		rowCount, err := model.TukTuk.UpdateRideStatus(ctx, *ride)
+		if err != nil {
+			log.Println("[checkIfDriverBookedIsValid][Error] Err in updating db", err)
+		}
+
+		if rowCount == 0 {
+			log.Println("[checkIfDriverBookedIsValid] DB not Updated")
+		}
+
 	}
 
 	return isValid
@@ -447,11 +466,11 @@ func (ff *FFClient) sendNotification(ctx context.Context, ride *model.RideDetail
 	fbclient.AddId(ctx, driver.DeviceId).SendPushNotification(ctx, data)
 }
 
-func (ff *FFClient) sendInvalidDriverNotification(ctx context.Context, ride *model.RideDetailModel) {
+func (ff *FFClient) sendInvalidDriverNotification(ctx context.Context, driverId int64, ride *model.RideDetailModel) {
 
 	fbclient := firebase.FClient
 
-	ddata, err := model.TukTuk.GetDriverUserById(ctx, ride.DriverId)
+	ddata, err := model.TukTuk.GetDriverUserById(ctx, driverId)
 	if err != nil {
 		log.Println("[rideResponse][Error] DB error", err)
 	}
