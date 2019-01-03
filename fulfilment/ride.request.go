@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/TukTuk/firebase"
@@ -17,7 +18,7 @@ import (
 	"github.com/TukTuk/model"
 )
 
-func (ff *FFClient) RequestRide(ctx context.Context, customerID int64, sLat, sLong, dLat, dLong float64, vehicleType string) (interface{}, error) {
+func (ff *FFClient) RequestRide(ctx context.Context, customerID int64, sLat, sLong, dLat, dLong float64, vehicleType, paymentMethod string) (interface{}, error) {
 
 	log.Printf("[RequestRide] Ride Source Lat:%f,Long:%f and Destination Lat:%f,Long:%f", sLat, sLong, dLat, dLong)
 
@@ -34,7 +35,7 @@ func (ff *FFClient) RequestRide(ctx context.Context, customerID int64, sLat, sLo
 		return nil, errors.New("Ride Invalid state")
 	}
 
-	data, err := ff.prepareRide(ctx, customerID, sLat, sLong, dLat, dLong, vehicleType)
+	data, err := ff.prepareRide(ctx, customerID, sLat, sLong, dLat, dLong, vehicleType, paymentMethod)
 	if err != nil {
 		log.Println("[RequestRide][Error] Error in preparing ride", err)
 		return nil, err
@@ -43,7 +44,7 @@ func (ff *FFClient) RequestRide(ctx context.Context, customerID int64, sLat, sLo
 	return data, err
 }
 
-func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, dLat, dLong float64, vehicleType string) (*RideBookResponse, error) {
+func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, dLat, dLong float64, vehicleType, paymentMethod string) (*RideBookResponse, error) {
 	var (
 		ride   model.RideDetailModel
 		resp   *RideBookResponse
@@ -62,6 +63,7 @@ func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, 
 		SourceLong:      sLong,
 		DestinationLat:  dLat,
 		DestinationLong: dLong,
+		PaymentMethod:   paymentMethod,
 	}
 
 	err = ff.RideStateTransition(ctx, &ride, common.RideStatus.REQUESTED.ID)
@@ -128,7 +130,7 @@ func (ff *FFClient) findDriver(ctx context.Context, ride *model.RideDetailModel,
 		return defaultRes, err
 	}
 
-	log.Printf("vehicles: %+v", drivers)
+	log.Printf("Available Drivers: %+v", drivers)
 
 	//preparing destination and source for gmaps
 	destination := ff.prepareDestinationForGmaps(ctx, drivers)
@@ -140,9 +142,14 @@ func (ff *FFClient) findDriver(ctx context.Context, ride *model.RideDetailModel,
 		return nil, err
 	}
 
-	log.Printf("Drivers:%+v, Distance:%+v", drivers, distance)
+	log.Printf("Distance:%+v", distance)
 
-	driversList := ff.getDriversData(ctx, distance, drivers)
+	driversList, err := ff.getDriversData(ctx, distance, drivers)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("Final Driver List:%+v", driversList)
 
 	// send push notification.
 	driverAloted, err := ff.sendPushNotification(ctx, driversList, ride)
@@ -229,23 +236,35 @@ func (ff *FFClient) rideResponse(ctx context.Context, driverId int64, ride *mode
 	return &resp, err
 }
 
-func (ff *FFClient) getDriversData(ctx context.Context, distances maps.DistanceMatrix, driverModel []model.DriverTrackingModel) []DriverData {
-	var drivers []DriverData
+func (ff *FFClient) getDriversData(ctx context.Context, distances maps.DistanceMatrix, driverModel []model.DriverTrackingModel) ([]DriverData, error) {
+	var (
+		drivers []DriverData
+		err     error
+	)
 
 	for _, row := range distances.Rows {
 		for idx, element := range row.Elements {
-			drivers = append(drivers, DriverData{
-				Id:       driverModel[idx].DriverID,
-				Distance: element.Distance.Value,
-			})
+			ddata, err := model.TukTuk.GetDriverUserById(ctx, driverModel[idx].DriverID)
+			if err != nil {
+				log.Println("[rideResponse][Error] DB error", err)
+				return drivers, err
+			}
+
+			log.Printf("[getDriversData] Driver status:%s, id:%d, driverModel:%+v", ddata.Status, ddata.Userid, driverModel[idx])
+
+			if strings.EqualFold(ddata.Status, common.STATUS_ACTIVATE) {
+				drivers = append(drivers, DriverData{
+					Id:       driverModel[idx].DriverID,
+					Distance: element.Distance.Value,
+				})
+			}
 		}
 	}
 
 	//only sorting on the basis of meters and new conditions can be added
 	sort.Slice(drivers, func(i, j int) bool { return drivers[i].Distance < drivers[j].Distance })
-	log.Printf("SOrted List of Drivers: %+v", drivers)
 
-	return drivers
+	return drivers, err
 }
 
 func (ff *FFClient) prepareDestinationForGmaps(ctx context.Context, drivers []model.DriverTrackingModel) string {
@@ -349,8 +368,8 @@ driverLoop:
 				if !ff.checkIfDriverBookedIsValid(ctx, rideUpdated.DriverId, drivers[:idx+1]) {
 					log.Printf("Driver booked for ride id:%d , driver id:%d , is not valid does not lies in range. %+v", ride.Id, rideUpdated.DriverId, drivers[:idx+1])
 
-					log.Printf("Sending Push notification to wrong driver and cancel it's ride. id:%d", driver.Id)
-					go ff.sendInvalidDriverNotification(ctx, &rideUpdated)
+					log.Printf("Sending Push notification to wrong driver and cancel it's ride. id:%d", rideUpdated.DriverId)
+					ff.sendInvalidDriverNotification(ctx, &rideUpdated)
 
 					return res, errors.New("Invalid Driver Booked")
 				}
@@ -442,5 +461,5 @@ func (ff *FFClient) sendInvalidDriverNotification(ctx context.Context, ride *mod
 		"message": "Ride Cancelled. Invalid Ride.",
 	}
 
-	fbclient.AddId(ctx, ddata.DeviceId).SendPushNotification(ctx, data)
+	go fbclient.AddId(ctx, ddata.DeviceId).SendPushNotification(ctx, data)
 }

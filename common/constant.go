@@ -12,6 +12,7 @@ const (
 	DRIVER_CANCELLED = 1
 	RIDER_CANCELLED  = 1
 	NOTIFY_RIDER     = true
+	STATUS_ACTIVATE  = "Activate"
 )
 
 //Endpoints
