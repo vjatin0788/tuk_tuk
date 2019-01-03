@@ -23,25 +23,27 @@ type RideDetailModel struct {
 	RideCompletedTime string  `db:"ride_completed_time" json:"ride_completed_time"`
 	RideFailedTime    string  `db:"ride_failed_time" json:"ride_failed_time"`
 	RideStartTime     string  `db:"ride_start_time" json:"ride_start_time"`
+	PaymentMethod     string  `db:"payment_method" json:"payment_method"`
 }
 
 type RideDetailTabel struct {
-	Id                int64         `db:"id" json:"id"`
-	CustomerId        int64         `db:"customer_id" json:"customer_id"`
-	DriverId          int64         `db:"driver_id" json:"driver_id"`
-	SourceLat         float64       `db:"source_lat" json:"source_lat"`
-	SourceLong        float64       `db:"source_long" json:"source_long"`
-	DestinationLat    float64       `db:"destination_lat" json:"destination_lat"`
-	DestinationLong   float64       `db:"destination_long" json:"destination_long"`
-	Status            int64         `db:"status" json:"status"`
-	CreatedAt         string        `db:"created_at" json:"created_at"`
-	UpdatedAt         string        `db:"updated_at" json:"updated_at"`
-	DriverCancelled   sql.NullInt64 `db:"driver_cancelled" json:"driver_cancelled"`
-	RiderCancelled    sql.NullInt64 `db:"rider_cancelled" json:"rider_cancelled"`
-	RideBookedTime    string        `db:"ride_booked_time" json:"ride_booked_time"`
-	RideCompletedTime string        `db:"ride_completed_time" json:"ride_completed_time"`
-	RideFailedTime    string        `db:"ride_failed_time" json:"ride_failed_time"`
-	RideStartTime     string        `db:"ride_start_time" json:"ride_start_time"`
+	Id                int64          `db:"id" json:"id"`
+	CustomerId        int64          `db:"customer_id" json:"customer_id"`
+	DriverId          int64          `db:"driver_id" json:"driver_id"`
+	SourceLat         float64        `db:"source_lat" json:"source_lat"`
+	SourceLong        float64        `db:"source_long" json:"source_long"`
+	DestinationLat    float64        `db:"destination_lat" json:"destination_lat"`
+	DestinationLong   float64        `db:"destination_long" json:"destination_long"`
+	Status            int64          `db:"status" json:"status"`
+	CreatedAt         string         `db:"created_at" json:"created_at"`
+	UpdatedAt         string         `db:"updated_at" json:"updated_at"`
+	DriverCancelled   sql.NullInt64  `db:"driver_cancelled" json:"driver_cancelled"`
+	RiderCancelled    sql.NullInt64  `db:"rider_cancelled" json:"rider_cancelled"`
+	RideBookedTime    string         `db:"ride_booked_time" json:"ride_booked_time"`
+	RideCompletedTime string         `db:"ride_completed_time" json:"ride_completed_time"`
+	RideFailedTime    string         `db:"ride_failed_time" json:"ride_failed_time"`
+	RideStartTime     string         `db:"ride_start_time" json:"ride_start_time"`
+	PaymentMethod     sql.NullString `db:"payment_method" json:"payment_method"`
 }
 
 func (table RideDetailTabel) GetModel() RideDetailModel {
@@ -61,6 +63,7 @@ func (table RideDetailTabel) GetModel() RideDetailModel {
 		RideBookedTime:    table.RideBookedTime,
 		RideCompletedTime: table.RideCompletedTime,
 		RideFailedTime:    table.RideFailedTime,
+		PaymentMethod:     table.PaymentMethod.String,
 	}
 }
 
@@ -81,6 +84,7 @@ func (model RideDetailModel) GetTable() RideDetailTabel {
 		RideBookedTime:    model.RideBookedTime,
 		RideCompletedTime: model.RideCompletedTime,
 		RideFailedTime:    model.RideFailedTime,
+		PaymentMethod:     sql.NullString{model.PaymentMethod, false},
 	}
 }
 
@@ -93,7 +97,7 @@ func (table RideDetailTabel) InsertRideDetails(ctx context.Context) (int64, erro
 
 	var err error
 
-	res, err := statement.InsertRideDetails.ExecContext(ctx, table.CustomerId, table.SourceLat, table.SourceLong, table.DestinationLat, table.DestinationLong, table.Status)
+	res, err := statement.InsertRideDetails.ExecContext(ctx, table.CustomerId, table.SourceLat, table.SourceLong, table.DestinationLat, table.DestinationLong, table.Status, table.PaymentMethod.String)
 	if err != nil {
 		log.Println("[InsertRideDetails][Error] Err in inserting", err)
 		return 0, err

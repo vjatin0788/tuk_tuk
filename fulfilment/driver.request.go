@@ -154,7 +154,7 @@ func (ff *FFClient) alotDriverForRide(ctx context.Context, userId int64, ride *m
 		return nil, err
 	}
 
-	log.Printf("[validateAndUpdateRideStatus]Driver data :%d, driver id:%d", ddata, userId)
+	log.Printf("[validateAndUpdateRideStatus]Driver data :%+v, driver id:%d", ddata, userId)
 
 	if ddata.Userid != userId {
 		log.Println("[validateAndUpdateRideStatus][Error] User ID Mismatch")

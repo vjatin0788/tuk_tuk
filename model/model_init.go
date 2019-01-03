@@ -40,7 +40,7 @@ var (
 	getDriverUserById                  = `SELECT * FROM tbusers WHERE userid=?`
 	insertInvoiceByCustomerId          = `INSERT INTO tbinvoice(customer_id,driver_id,source_lat,source_lng,source_address,destination_lat,destination_lng,source_time,total_minutes,cost_per_minute,time_cost,distance,cost_per_km,distance_cost,base_fare,extra_charges,discount,total_cost,gst_percentage,gst,final_cost) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 	getInvoiceByCustomerId             = `SELECT * FROM tbinvoice WHERE customer_id=? ORDER BY invoice_id DESC LIMIT `
-	insertRideDetails                  = `INSERT INTO tb_ride_details(customer_id,source_lat,source_long,destination_lat,destination_long,status) VALUES(?,?,?,?,?,?)`
+	insertRideDetails                  = `INSERT INTO tb_ride_details(customer_id,source_lat,source_long,destination_lat,destination_long,status,payment_method) VALUES(?,?,?,?,?,?,?)`
 	updateRideDetailsByRideId          = `UPDATE tb_ride_details SET driver_id=?,status=?,driver_cancelled=?,rider_cancelled=?,ride_booked_time=?,ride_completed_time=?,ride_failed_time=?,ride_start_time=? WHERE id=?`
 	updateRideDetailsByRideIdAndStatus = `UPDATE tb_ride_details SET driver_id=?,status=?,ride_booked_time=? WHERE id=? and status=1`
 	updateRideStatusFailedByRideId     = `UPDATE tb_ride_details SET status=?,ride_failed_time=? WHERE id=?`
