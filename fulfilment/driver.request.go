@@ -35,6 +35,7 @@ func (ff *FFClient) DriverBooked(ctx context.Context, userId, rideId int64, isBo
 
 	log.Printf("[DriverBooked] Ride Details:%+v", rideDetail)
 
+	//it's check in case there is no ride of requested ride id.
 	if rideId != rideDetail.Id {
 		log.Println("[DriverBooked][Error] Invalid Ride id", rideId)
 		return nil, errors.New("Invalid Ride ID.")
@@ -68,7 +69,7 @@ func (ff *FFClient) prepareRideForDriver(ctx context.Context, userId int64, ride
 		}
 
 		log.Println("[prepareRideForDriver] Driver Already aloted")
-		return nil, err
+		return nil, errors.New("Something Went Wrong")
 	}
 
 	//check if driver is allocated to another ride
@@ -77,7 +78,7 @@ func (ff *FFClient) prepareRideForDriver(ctx context.Context, userId int64, ride
 		return nil, err
 	}
 
-	log.Printf("[prepareRideForDriver] Ride Details of driver id:%d , details:%+v", ride.Id, rdData)
+	log.Printf("[prepareRideForDriver] Ride Details of driver id:%d , details:%+v", ride.DriverId, rdData)
 
 	if rdData.Status >= common.RideStatus.BOOKED.ID && rdData.Status < common.RideStatus.COMPLETED.ID {
 		log.Println("[prepareRideForDriver] Driver already booked with some other ride", rdData.Status)

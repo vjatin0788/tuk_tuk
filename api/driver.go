@@ -28,6 +28,8 @@ func (api *APIMod) DriverWebhook(rw http.ResponseWriter, r *http.Request) (inter
 		return nil, errors.New("Wrong Long value")
 	}
 
+	log.Printf("[DriverWebhook]Lat:%s,Long:%s", lat, long)
+
 	userid := r.Header.Get("User-Id")
 	//verify user id. this will be driver id
 	if userid == "" {

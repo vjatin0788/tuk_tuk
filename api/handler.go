@@ -61,8 +61,9 @@ func (api *APIMod) InitHandler() {
 
 	r.Handle("/v1/tuktuk/driver/available", HandlerFunc(api.DriverAvailableHandler))
 	r.Handle("/v1/tuktuk/driver/hotspot", HandlerFunc(api.DriverWebhook))
-	r.Handle("/v1/tuktuk/rider/request", HandlerFunc(api.RequestRide))
+	r.Handle("/v1/tuktuk/rider/request", HandlerFunc(api.RequestRideHandler))
 	r.Handle("/v1/tuktuk/driver/book", HandlerFunc(api.DriverBookHandler))
+	r.Handle("/v1/tuktuk/rider/start", HandlerFunc(api.RideStartHandler))
 
 	http.Handle("/", r)
 	log.Println("Handler initialized")

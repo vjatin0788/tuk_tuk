@@ -1,5 +1,7 @@
 package fulfilment
 
+var DriverBookedNotifiedMap map[int64]chan bool
+
 type RiderAvailableResponse struct {
 	DriverDetails    DriverDetailsResponse `json:"driver_details"`
 	CurrentLatitude  float64               `json:"current_lat"`
@@ -44,4 +46,6 @@ type CustomerDetailsResponse struct {
 	Name       string `json:name`
 }
 
-var DriverBookedNotifiedMap map[int64]chan bool
+type RideStartResponse struct {
+	Success bool `json:"success"`
+}

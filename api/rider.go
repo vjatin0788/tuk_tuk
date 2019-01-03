@@ -21,6 +21,8 @@ func (api *APIMod) DriverAvailableHandler(rw http.ResponseWriter, r *http.Reques
 	long := r.FormValue("long")
 	longVal, _ := strconv.ParseFloat(long, 64)
 
+	log.Printf("[DriverAvailableHandler]Customer Lat:%s,Long:%s", lat, long)
+
 	vehicleType := r.FormValue("vehicle_type")
 
 	userid := r.Header.Get("User-Id")
@@ -61,7 +63,7 @@ func (api *APIMod) DriverAvailableHandler(rw http.ResponseWriter, r *http.Reques
 	return data, err
 }
 
-func (api *APIMod) RequestRide(rw http.ResponseWriter, r *http.Request) (interface{}, error) {
+func (api *APIMod) RequestRideHandler(rw http.ResponseWriter, r *http.Request) (interface{}, error) {
 	var err error
 
 	ctx := r.Context()
@@ -97,6 +99,40 @@ func (api *APIMod) RequestRide(rw http.ResponseWriter, r *http.Request) (interfa
 	}
 
 	data, err := fulfilment.FF.RequestRide(ctx, uid, sourceVal[0], sourceVal[1], destVal[0], destVal[1], vehicleType, paymentMethod)
+	if err != nil {
+		log.Println("[RequestRide][Error] Err in request ride", err)
+
+		return nil, err
+	}
+
+	return data, err
+}
+
+func (api *APIMod) RideStartHandler(rw http.ResponseWriter, r *http.Request) (interface{}, error) {
+	var err error
+
+	ctx := r.Context()
+
+	rideIdStr := r.FormValue("ride_id")
+	rideId, err := strconv.ParseInt(rideIdStr, 10, 64)
+	if err != nil {
+		log.Println("[RequestRide][Error] Parsing int")
+		return nil, errors.New("Error parsing int")
+	}
+
+	userid := r.Header.Get("User-Id")
+	if userid == "" {
+		log.Println("[RequestRide][Error] empty user id")
+		return nil, errors.New("Empty User ID")
+	}
+
+	uid, err := strconv.ParseInt(userid, 10, 64)
+	if err != nil {
+		log.Println("[RequestRide][Error] Parsing int")
+		return nil, errors.New("Error parsing int")
+	}
+
+	data, err := fulfilment.FF.StartRide(ctx, uid, rideId)
 	if err != nil {
 		log.Println("[RequestRide][Error] Err in request ride", err)
 
