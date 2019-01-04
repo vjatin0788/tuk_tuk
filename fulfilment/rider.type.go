@@ -49,3 +49,10 @@ type CustomerDetailsResponse struct {
 type RideStartResponse struct {
 	Success bool `json:"success"`
 }
+
+type DriverLocationResponse struct {
+	CurrentLat  float64 `json:"current_lat"`
+	CurrentLong float64 `json:"current_long"`
+	RideId      int64   `json:"ride_id"`
+	Message     string  `json:"message"`
+}
