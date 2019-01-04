@@ -107,37 +107,3 @@ func (api *APIMod) RequestRideHandler(rw http.ResponseWriter, r *http.Request) (
 
 	return data, err
 }
-
-func (api *APIMod) RideStartHandler(rw http.ResponseWriter, r *http.Request) (interface{}, error) {
-	var err error
-
-	ctx := r.Context()
-
-	rideIdStr := r.FormValue("ride_id")
-	rideId, err := strconv.ParseInt(rideIdStr, 10, 64)
-	if err != nil {
-		log.Println("[RequestRide][Error] Parsing int")
-		return nil, errors.New("Error parsing int")
-	}
-
-	userid := r.Header.Get("User-Id")
-	if userid == "" {
-		log.Println("[RequestRide][Error] empty user id")
-		return nil, errors.New("Empty User ID")
-	}
-
-	uid, err := strconv.ParseInt(userid, 10, 64)
-	if err != nil {
-		log.Println("[RequestRide][Error] Parsing int")
-		return nil, errors.New("Error parsing int")
-	}
-
-	data, err := fulfilment.FF.StartRide(ctx, uid, rideId)
-	if err != nil {
-		log.Println("[RequestRide][Error] Err in request ride", err)
-
-		return nil, err
-	}
-
-	return data, err
-}

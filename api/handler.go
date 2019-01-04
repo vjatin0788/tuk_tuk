@@ -60,10 +60,16 @@ func (api *APIMod) InitHandler() {
 	r := mux.NewRouter()
 
 	r.Handle("/v1/tuktuk/driver/available", HandlerFunc(api.DriverAvailableHandler))
+
 	r.Handle("/v1/tuktuk/driver/hotspot", HandlerFunc(api.DriverWebhook))
+
 	r.Handle("/v1/tuktuk/rider/request", HandlerFunc(api.RequestRideHandler))
+
 	r.Handle("/v1/tuktuk/driver/book", HandlerFunc(api.DriverBookHandler))
+
 	r.Handle("/v1/tuktuk/rider/start", HandlerFunc(api.RideStartHandler))
+
+	r.Handle("/v1/tuktuk/rider/driver/location", HandlerFunc(api.DriverLocationHandler))
 
 	http.Handle("/", r)
 	log.Println("Handler initialized")

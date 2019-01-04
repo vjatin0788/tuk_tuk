@@ -117,3 +117,72 @@ func (ff *FFClient) sendPushNotificationToCustomer(ctx context.Context, ride *mo
 
 	go fbclient.AddId(ctx, driver.DeviceId).SendPushNotification(ctx, data)
 }
+
+func (ff *FFClient) GetDriverCurrentLocation(ctx context.Context, userId, rideId int64) (interface{}, error) {
+	var (
+		defaultResp DriverLocationResponse
+		err         error
+	)
+
+	if rideId == 0 {
+		log.Println("[GetDriverCurrentLocation][Error] Error Ride Id is 0.")
+		return defaultResp, errors.New("Ride Id is 0")
+	}
+
+	rideDetail, err := model.TukTuk.GetRideDetailsByRideId(ctx, rideId)
+	if err != nil {
+		log.Println("[GetDriverCurrentLocation][Error] Error in fetching ride data", err)
+		return defaultResp, err
+	}
+
+	//it's check in case there is no ride of requested ride id.
+	if rideId != rideDetail.Id {
+		log.Println("[GetDriverCurrentLocation][Error] Invalid Ride id", rideId)
+		return defaultResp, errors.New("Invalid Ride ID.")
+	}
+
+	log.Printf("[GetDriverCurrentLocation] Ride:%+v ", rideDetail)
+
+	ddata, err := model.TukTuk.GetCustomerById(ctx, userId)
+	if err != nil {
+		log.Println("[GetDriverCurrentLocation][Error] Error in fetching ride data", err)
+		return defaultResp, err
+	}
+
+	if ddata.CustomerId != rideDetail.CustomerId {
+		log.Printf("[GetDriverCurrentLocation][Error] Customer ID mismatch in ride details. Found id:%d, required id:%d", ddata.CustomerId, rideDetail.CustomerId)
+		return defaultResp, errors.New("Driver Id mismatch")
+	}
+
+	log.Printf("[GetDriverCurrentLocation] Customer data:%+v ", ddata)
+
+	return ff.prepareDriverLocationResponse(ctx, rideDetail)
+}
+
+func (ff *FFClient) prepareDriverLocationResponse(ctx context.Context, ride model.RideDetailModel) (*DriverLocationResponse, error) {
+	var (
+		defaultResp *DriverLocationResponse
+		err         error
+	)
+
+	data, err := model.TukTuk.GetDriverById(ctx, ride.DriverId)
+	if err != nil {
+		log.Println("[prepareDriverLocationResponse][Error] Error in fetching data", err)
+		return defaultResp, errors.New("DB Error")
+	}
+
+	log.Printf("[GetDriverCurrentLocation] Driver Tracking data:%+v ", data)
+
+	if data.DriverID != ride.DriverId {
+		log.Printf("[prepareDriverLocationResponse][Error] Driver ID mismatch in ride details. Found id:%d, required id:%d", data.DriverID, ride.DriverId)
+		return defaultResp, errors.New("Driver Id mismatch")
+	}
+
+	defaultResp = &DriverLocationResponse{
+		CurrentLat:  data.CurrentLatitude,
+		CurrentLong: data.CurrentLongitude,
+		RideId:      ride.Id,
+	}
+
+	return defaultResp, err
+}
