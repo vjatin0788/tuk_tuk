@@ -15,9 +15,7 @@ type Base struct {
 
 type Response struct {
 	Base
-	Data struct {
-		ResponseData interface{} `json:"response"`
-	} `json:"data"`
+	Data interface{} `json:"data"`
 }
 
 // each handler can return the data and error, and serveHTTP can chose how to convert this
@@ -38,7 +36,7 @@ func (fn HandlerFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
 
 	if data != nil && err == nil {
-		response.Data.ResponseData = data
+		response.Data = data
 		log.Println(data)
 	}
 

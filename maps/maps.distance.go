@@ -46,12 +46,16 @@ func (mps *GMClient) prepareGetDistanceRequest(ctx context.Context, destination,
 		return defaultRes, err
 	}
 
+	log.Println("[PrepareGetDistanceRequest] Source, destin", origins, destination)
+
 	query := req.URL.Query()
 	query.Add("mode", mode)
 	query.Add("origins", origins)
 	query.Add("destinations", destination)
 	query.Add("key", mps.Cfg.Maps.ApiKey)
 	req.URL.RawQuery = query.Encode()
+
+	log.Println("[PrepareGetDistanceRequest][Error]req for maps ", req)
 
 	resp, err := mps.HttpClient.Do(req)
 	if err != nil {
