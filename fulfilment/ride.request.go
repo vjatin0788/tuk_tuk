@@ -85,11 +85,11 @@ func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, 
 	resp, finderr := ff.findDriver(ctx, &ride, vehicleType)
 	if finderr != nil {
 		//any error beyond this mark ride as fail in db
-		log.Println("[rideResponse][Error] Ride Failed .setting ride status failed")
+		log.Println("[PrepareRide][Error] Ride Failed .setting ride status failed")
 
 		err := ff.RideStateTransition(ctx, &ride, common.RideStatus.FAILED.ID)
 		if err != nil {
-			log.Println("[rideResponse][Error] Err in state transition", err)
+			log.Println("[PrepareRide][Error] Err in state transition", err)
 			return nil, err
 		}
 
@@ -97,7 +97,7 @@ func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, 
 
 		err = model.TukTuk.UpdateRideFail(ctx, ride)
 		if err != nil {
-			log.Println("[rideResponse][Error] Err in updating db", err)
+			log.Println("[PrepareRide][Error] Err in updating db", err)
 		}
 
 		return nil, finderr
@@ -226,10 +226,17 @@ func (ff *FFClient) rideResponse(ctx context.Context, driverId int64, ride *mode
 			Name:          ddata.Name,
 			Model:         vehicles[0].Model,
 			VehicleNumber: vehicles[0].VehicleNumber,
+			PhoneNumber:   "08071996575",
+			VehicleType:   vehicles[0].VehicleType,
+			CurrentLat:    driverModel.CurrentLatitude,
+			CurrentLong:   driverModel.CurrentLongitude,
+			DriverImage:   ddata.Driverpic,
 		},
-		CurrentLat:  driverModel.CurrentLatitude,
-		CurrentLong: driverModel.CurrentLongitude,
-		RideId:      ride.Id,
+		SourceLat:       ride.SourceLat,
+		SourceLong:      ride.SourceLong,
+		DestinationLat:  ride.DestinationLat,
+		DestinationLong: ride.DestinationLong,
+		RideId:          ride.Id,
 	}
 
 	return &resp, err
@@ -458,7 +465,6 @@ func (ff *FFClient) sendNotification(ctx context.Context, ride *model.RideDetail
 	userData, err := model.TukTuk.GetCustomerById(ctx, ride.CustomerId)
 	if err != nil {
 		log.Println("[sendNotification]DB err:", err)
-		return
 	}
 
 	data := PushNotification{

@@ -9,10 +9,16 @@ type RiderAvailableResponse struct {
 }
 
 type DriverDetailsResponse struct {
-	DriverId      int64  `json:"driver_id"`
-	Name          string `json:"name"`
-	Model         string `json:"vehicle_model"`
-	VehicleNumber string `json:"vehicle_number"`
+	DriverId      int64   `json:"driver_id"`
+	Name          string  `json:"name"`
+	Model         string  `json:"vehicle_model"`
+	VehicleNumber string  `json:"vehicle_number"`
+	PhoneNumber   string  `json:phone_number`
+	DriverImage   string  `json:driver_image`
+	Rating        string  `json:"rating"`
+	CurrentLat    float64 `json:"current_lat"`
+	CurrentLong   float64 `json:"current_long"`
+	VehicleType   string  `json:"vehicle_type"`
 }
 
 type DriverTrackingResponse struct {
@@ -20,11 +26,13 @@ type DriverTrackingResponse struct {
 }
 
 type RideBookResponse struct {
-	DriverDetail DriverDetailsResponse `json:"driver_details"`
-	CurrentLat   float64               `json:"current_lat"`
-	CurrentLong  float64               `json:"current_long"`
-	RideId       int64                 `json:"ride_id"`
-	Message      string                `json:"message"`
+	DriverDetail    DriverDetailsResponse `json:"driver_details"`
+	SourceLat       float64               `json:"source_lat"`
+	SourceLong      float64               `json:"source_long"`
+	DestinationLat  float64               `json:"destination_lat"`
+	DestinationLong float64               `json:"destination_long"`
+	RideId          int64                 `json:"ride_id"`
+	Message         string                `json:"message"`
 }
 
 type DriverData struct {

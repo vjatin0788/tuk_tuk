@@ -39,7 +39,7 @@ func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}) 
 	//adding xds
 	client.AppendDevices(fb.Xds)
 
-	log.Println("[SendPushNotification]Sending Push Notif", data)
+	log.Printf("[SendPushNotification]Sending Push Notif:%+v", data)
 
 	resp, err := client.Send()
 	if err != nil {
