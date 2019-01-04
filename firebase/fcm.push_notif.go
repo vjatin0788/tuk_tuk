@@ -27,21 +27,22 @@ func (fb *FireBase) AddXd(ctx context.Context, xd string) *FireBase {
 	return fb
 }
 
-func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}) error {
+func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}, deviceId []string) error {
 
 	var err error
 
 	client := fb.FBaseClient
 
 	//adding ids
-	client.NewFcmRegIdsMsg(fb.Ids, data)
+	client.NewFcmRegIdsMsg(deviceId, data)
 
 	//adding xds
 	client.AppendDevices(fb.Xds)
 
-	log.Printf("[SendPushNotification]Sending Push Notif:%+v", data)
+	log.Printf("[SendPushNotification]Sending Push Notif:%+v deviceIds:%+v", data, deviceId)
 
 	resp, err := client.Send()
+
 	if err != nil {
 		log.Println("[SendPushNotification][Error] Err in sending notification", err)
 		return err

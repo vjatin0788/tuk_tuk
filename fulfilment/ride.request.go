@@ -479,7 +479,10 @@ func (ff *FFClient) sendNotification(ctx context.Context, ride *model.RideDetail
 
 	log.Printf("[sendNotification]Push notification:%+v", data)
 
-	go fbclient.AddId(ctx, driver.DeviceId).SendPushNotification(ctx, data)
+	deviceIds := make([]string, 0)
+	deviceIds = append(deviceIds, userData.DeviceId)
+
+	go fbclient.SendPushNotification(ctx, data, deviceIds)
 }
 
 func (ff *FFClient) sendInvalidDriverNotification(ctx context.Context, driverId int64, ride *model.RideDetailModel) {
@@ -501,5 +504,8 @@ func (ff *FFClient) sendInvalidDriverNotification(ctx context.Context, driverId 
 
 	log.Printf("[sendNotification]Push notification:%+v", data)
 
-	go fbclient.AddId(ctx, ddata.DeviceId).SendPushNotification(ctx, data)
+	deviceIds := make([]string, 0)
+	deviceIds = append(deviceIds, ddata.DeviceId)
+
+	go fbclient.SendPushNotification(ctx, data, deviceIds)
 }

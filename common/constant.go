@@ -5,7 +5,7 @@ import "time"
 const (
 	MASTER_DB_LOCAL  = "root:12345@/tuktuk?parseTime=true&loc=Local&allowNativePasswords=true"
 	MASTER_DB        = "tuktuk_user:tuktuk_123@tcp(122.160.30.50:3306)/tuktuk?parseTime=true&loc=Local&allowNativePasswords=true"
-	API_KEY          = ""
+	API_KEY          = "AIzaSyC2zwzwJP1SFBRGVt80SroTm-7ga-z1lcA"
 	METHOD_GET       = "GET"
 	METHOD_POST      = "POST"
 	TIME_SLEEP       = 10 * time.Second

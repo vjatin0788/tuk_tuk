@@ -118,7 +118,11 @@ func (ff *FFClient) sendPushNotificationToCustomer(ctx context.Context, ride *mo
 		"message": fmt.Sprint("Driver Arrived"),
 	}
 
-	go fbclient.AddId(ctx, driver.DeviceId).SendPushNotification(ctx, data)
+	deviceIds := make([]string, 0)
+	deviceIds = append(deviceIds, driver.DeviceId)
+
+	go fbclient.SendPushNotification(ctx, data, deviceIds)
+
 }
 
 func (ff *FFClient) GetDriverCurrentLocation(ctx context.Context, userId, rideId int64) (interface{}, error) {
@@ -163,6 +167,82 @@ func (ff *FFClient) GetDriverCurrentLocation(ctx context.Context, userId, rideId
 }
 
 func (ff *FFClient) prepareDriverLocationResponse(ctx context.Context, ride model.RideDetailModel) (*DriverLocationResponse, error) {
+	var (
+		defaultResp *DriverLocationResponse
+		err         error
+	)
+
+	data, err := model.TukTuk.GetDriverById(ctx, ride.DriverId)
+	if err != nil {
+		log.Println("[prepareDriverLocationResponse][Error] Error in fetching data", err)
+		return defaultResp, errors.New("DB Error")
+	}
+
+	log.Printf("[GetDriverCurrentLocation] Driver Tracking data:%+v ", data)
+
+	if data.DriverID != ride.DriverId {
+		log.Printf("[prepareDriverLocationResponse][Error] Driver ID mismatch in ride details. Found id:%d, required id:%d", data.DriverID, ride.DriverId)
+		return defaultResp, errors.New("Driver Id mismatch")
+	}
+
+	defaultResp = &DriverLocationResponse{
+		CurrentLat:  data.CurrentLatitude,
+		CurrentLong: data.CurrentLongitude,
+		RideId:      ride.Id,
+	}
+
+	return defaultResp, err
+}
+
+func (ff *FFClient) RideComplete(ctx context.Context, userId, rideId int64) (interface{}, error) {
+	var (
+		defaultResp DriverLocationResponse
+		err         error
+	)
+
+	if rideId == 0 {
+		log.Println("[RideComplete][Error] Error Ride Id is 0.")
+		return defaultResp, errors.New("Ride Id is 0")
+	}
+
+	rideDetail, err := model.TukTuk.GetRideDetailsByRideId(ctx, rideId)
+	if err != nil {
+		log.Println("[RideComplete][Error] Error in fetching ride data", err)
+		return defaultResp, err
+	}
+
+	//it's check in case there is no ride of requested ride id.
+	if rideId != rideDetail.Id {
+		log.Println("[RideComplete][Error] Invalid Ride id", rideId)
+		return defaultResp, errors.New("Invalid Ride ID.")
+	}
+
+	log.Printf("[RideComplete] Ride:%+v ", rideDetail)
+
+	ddata, err := model.TukTuk.GetCustomerById(ctx, userId)
+	if err != nil {
+		log.Println("[RideComplete][Error] Error in fetching ride data", err)
+		return defaultResp, err
+	}
+
+	if ddata.CustomerId != rideDetail.CustomerId {
+		log.Printf("[RideComplete][Error] Customer ID mismatch in ride details. Found id:%d, required id:%d", ddata.CustomerId, rideDetail.CustomerId)
+		return defaultResp, errors.New("Driver Id mismatch")
+	}
+
+	//state transition
+	err = ff.RideStateTransition(ctx, &rideDetail, common.RideStatus.COMPLETED.ID)
+	if err != nil {
+		log.Println("[RideComplete][Error] Ride state Transitiion", err)
+		return defaultResp, err
+	}
+
+	log.Printf("[RideComplete] Customer data:%+v ", ddata)
+
+	return ff.prepareRideComplete(ctx, rideDetail)
+}
+
+func (ff *FFClient) prepareRideComplete(ctx context.Context, ride model.RideDetailModel) (*DriverLocationResponse, error) {
 	var (
 		defaultResp *DriverLocationResponse
 		err         error
