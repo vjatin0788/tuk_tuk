@@ -133,7 +133,7 @@ func (ff *FFClient) findDriver(ctx context.Context, ride *model.RideDetailModel,
 
 	//preparing destination and source for gmaps
 	destination := ff.prepareDestinationForGmaps(ctx, drivers)
-	source := fmt.Sprintf("%s,%s", ride.SourceLat, ride.SourceLong)
+	source := fmt.Sprintf("%f,%f", ride.SourceLat, ride.SourceLong)
 
 	distance, err := maps.MapsClient.GetDistance(ctx, destination, source)
 	if err != nil {
@@ -455,15 +455,25 @@ func (ff *FFClient) sendNotification(ctx context.Context, ride *model.RideDetail
 
 	fbclient := firebase.FClient
 
-	data := map[string]string{
-		"ride_id":          fmt.Sprintf("%d", ride.Id),
-		"source_lat":       fmt.Sprintf("%f", ride.SourceLat),
-		"source_long":      fmt.Sprintf("%f", ride.SourceLong),
-		"destination_lat":  fmt.Sprintf("%f", ride.DestinationLat),
-		"destination_long": fmt.Sprintf("%f", ride.DestinationLong),
+	userData, err := model.TukTuk.GetCustomerById(ctx, ride.CustomerId)
+	if err != nil {
+		log.Println("[sendNotification]DB err:", err)
+		return
 	}
 
-	fbclient.AddId(ctx, driver.DeviceId).SendPushNotification(ctx, data)
+	data := PushNotification{
+		Type: "ride_accept",
+		Data: PushNotificationRideRequest{
+			RideId:      ride.Id,
+			CurrentLat:  ride.SourceLat,
+			CurrentLong: ride.SourceLong,
+			Name:        userData.Name,
+		},
+	}
+
+	log.Printf("[sendNotification]Push notification:%+v", data)
+
+	go fbclient.AddId(ctx, driver.DeviceId).SendPushNotification(ctx, data)
 }
 
 func (ff *FFClient) sendInvalidDriverNotification(ctx context.Context, driverId int64, ride *model.RideDetailModel) {
@@ -475,10 +485,15 @@ func (ff *FFClient) sendInvalidDriverNotification(ctx context.Context, driverId 
 		log.Println("[rideResponse][Error] DB error", err)
 	}
 
-	data := map[string]string{
-		"ride_id": fmt.Sprintf("%d", ride.Id),
-		"message": "Ride Cancelled. Invalid Ride.",
+	data := PushNotification{
+		Type: "invalid_ride",
+		Data: PushNotificationInvalidRide{
+			RideId:  ride.Id,
+			Message: "Invalid Ride",
+		},
 	}
+
+	log.Printf("[sendNotification]Push notification:%+v", data)
 
 	go fbclient.AddId(ctx, ddata.DeviceId).SendPushNotification(ctx, data)
 }

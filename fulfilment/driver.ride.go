@@ -79,6 +79,9 @@ func (ff *FFClient) StartRide(ctx context.Context, userId, rideId int64) (interf
 	ff.sendPushNotificationToCustomer(ctx, &rideDetail, ddata)
 
 	defaultResp.Success = true
+	defaultResp.CurrentLat = rideDetail.DestinationLat
+	defaultResp.CurrentLong = rideDetail.DestinationLong
+	defaultResp.RideId = rideDetail.Id
 
 	return defaultResp, err
 }

@@ -10,8 +10,8 @@ type RiderAvailableResponse struct {
 
 type DriverDetailsResponse struct {
 	DriverId      int64  `json:"driver_id"`
-	Name          string `json:name`
-	Model         string `json:"model"`
+	Name          string `json:"name"`
+	Model         string `json:"vehicle_model"`
 	VehicleNumber string `json:"vehicle_number"`
 }
 
@@ -47,7 +47,10 @@ type CustomerDetailsResponse struct {
 }
 
 type RideStartResponse struct {
-	Success bool `json:"success"`
+	Success     bool    `json:"success"`
+	CurrentLat  float64 `json:"destination_lat"`
+	CurrentLong float64 `json:"destination_long"`
+	RideId      int64   `json:"ride_id"`
 }
 
 type DriverLocationResponse struct {
@@ -55,4 +58,21 @@ type DriverLocationResponse struct {
 	CurrentLong float64 `json:"current_long"`
 	RideId      int64   `json:"ride_id"`
 	Message     string  `json:"message"`
+}
+
+type PushNotificationRideRequest struct {
+	CurrentLat  float64 `json:"current_lat"`
+	CurrentLong float64 `json:"current_long"`
+	RideId      int64   `json:"ride_id"`
+	Name        string  `json:"name"`
+}
+
+type PushNotificationInvalidRide struct {
+	RideId  int64  `json:"ride_id"`
+	Message string `json:"message"`
+}
+
+type PushNotification struct {
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
 }

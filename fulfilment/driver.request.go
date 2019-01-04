@@ -184,6 +184,7 @@ func (ff *FFClient) alotDriverForRide(ctx context.Context, userId int64, ride *m
 	} else {
 		//Register in NSQ
 		log.Println("[validateAndUpdateRideStatus][Error] Error in getting value from map.Unable to notify.")
+		return nil, errors.New("Unable to notify.")
 	}
 
 	return ride, err
