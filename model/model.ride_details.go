@@ -137,10 +137,10 @@ func (table RideDetailTabel) UpdateRideDetails(ctx context.Context) error {
 
 func (db *DBTuktuk) UpdateRideWithStatus(ctx context.Context, rideModel RideDetailModel) (int64, error) {
 	//validations neeed to be inserted here
-	return rideModel.GetTable().UpdateRideDetailsAndStatus(ctx)
+	return rideModel.GetTable().updateRideDetailsAndStatus(ctx)
 }
 
-func (table RideDetailTabel) UpdateRideDetailsAndStatus(ctx context.Context) (int64, error) {
+func (table RideDetailTabel) updateRideDetailsAndStatus(ctx context.Context) (int64, error) {
 
 	var (
 		err      error
@@ -242,11 +242,11 @@ func (db *DBTuktuk) GetRideDetailsByDriverId(ctx context.Context, driverId int64
 
 func (db *DBTuktuk) UpdateRideFail(ctx context.Context, rideModel RideDetailModel) error {
 	//validations neeed to be inserted here
-	err := rideModel.GetTable().UpdateRideDetailsFailedStatus(ctx)
+	err := rideModel.GetTable().updateRideDetailsFailedStatus(ctx)
 	return err
 }
 
-func (table RideDetailTabel) UpdateRideDetailsFailedStatus(ctx context.Context) error {
+func (table RideDetailTabel) updateRideDetailsFailedStatus(ctx context.Context) error {
 
 	var err error
 
@@ -262,10 +262,10 @@ func (table RideDetailTabel) UpdateRideDetailsFailedStatus(ctx context.Context) 
 
 func (db *DBTuktuk) UpdateRideStart(ctx context.Context, rideModel RideDetailModel) (int64, error) {
 	//validations neeed to be inserted here
-	return rideModel.GetTable().UpdateRideDetailsStart(ctx)
+	return rideModel.GetTable().updateRideDetailsStart(ctx)
 }
 
-func (table RideDetailTabel) UpdateRideDetailsStart(ctx context.Context) (int64, error) {
+func (table RideDetailTabel) updateRideDetailsStart(ctx context.Context) (int64, error) {
 
 	var (
 		err      error
@@ -292,10 +292,10 @@ func (table RideDetailTabel) UpdateRideDetailsStart(ctx context.Context) (int64,
 
 func (db *DBTuktuk) UpdateRideStatus(ctx context.Context, rideModel RideDetailModel) (int64, error) {
 	//validations neeed to be inserted here
-	return rideModel.GetTable().UpdateRideDetailsStatus(ctx)
+	return rideModel.GetTable().updateRideDetailsStatus(ctx)
 }
 
-func (table RideDetailTabel) UpdateRideDetailsStatus(ctx context.Context) (int64, error) {
+func (table RideDetailTabel) updateRideDetailsStatus(ctx context.Context) (int64, error) {
 
 	var (
 		err      error
@@ -311,6 +311,35 @@ func (table RideDetailTabel) UpdateRideDetailsStatus(ctx context.Context) (int64
 	rowsAffectedCount, err := row.RowsAffected()
 	if err != nil {
 		log.Println("[UpdateRideDetailsStatus][Error] Err in getting row affected count", err)
+		return rowCount, err
+	}
+
+	rowCount = rowsAffectedCount
+
+	return rowCount, err
+}
+
+func (db *DBTuktuk) UpdateRideComplete(ctx context.Context, rideModel RideDetailModel) (int64, error) {
+	//validations neeed to be inserted here
+	return rideModel.GetTable().updateRideDetailsComplete(ctx)
+}
+
+func (table RideDetailTabel) updateRideDetailsComplete(ctx context.Context) (int64, error) {
+
+	var (
+		err      error
+		rowCount int64
+	)
+
+	row, err := statement.UpdateRideComplete.ExecContext(ctx, table.Status, table.RideStartTime, table.DestinationLat, table.DestinationLong, table.Id)
+	if err != nil {
+		log.Println("[updateRideDetailsComplete][Error] Err in inserting", err)
+		return rowCount, err
+	}
+
+	rowsAffectedCount, err := row.RowsAffected()
+	if err != nil {
+		log.Println("[updateRideDetailsComplete][Error] Err in getting row affected count", err)
 		return rowCount, err
 	}
 

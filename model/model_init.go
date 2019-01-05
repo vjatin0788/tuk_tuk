@@ -21,6 +21,7 @@ type PreparedStatement struct {
 	UpdateRideStatusFailed      *sqlx.Stmt
 	UpdateRideStart             *sqlx.Stmt
 	UpdateRideStatus            *sqlx.Stmt
+	UpdateRideComplete          *sqlx.Stmt
 	GetRideDetailsByRideId      *sqlx.Stmt
 	GetRideDetailsByCustomerID  *sqlx.Stmt
 	GetDriverUserById           *sqlx.Stmt
@@ -48,6 +49,7 @@ var (
 	updateRideStatusStartByRideId      = `UPDATE tb_ride_details SET status=?,ride_start_time=? WHERE id=?`
 	updateRideStatusFailedByRideId     = `UPDATE tb_ride_details SET status=?,ride_failed_time=? WHERE id=?`
 	updateRideStatusById               = `UPDATE tb_ride_details SET driver_id=?,status=? WHERE id=?`
+	updateRideCompleteById             = `UPDATE tb_ride_details SET status=?,ride_completed_time=?,destination_lat=?,destination_long=? WHERE id=?`
 	getRideDetailsByRideId             = `SELECT * FROM tb_ride_details WHERE id=?`
 	getRideDetailsByCustomerID         = `SELECT * FROM tb_ride_details WHERE customer_id=? ORDER BY id DESC LIMIT 1`
 	getRideDetailsByDriverID           = `SELECT * FROM tb_ride_details WHERE driver_id=? ORDER BY id DESC LIMIT 1`
@@ -72,4 +74,5 @@ func InitModel(db *DBTuktuk) {
 	statement.GetCustomerById, _ = db.DBConnection.Preparex(getCustomerById)
 	statement.UpdateRideStatusFailed, _ = db.DBConnection.Preparex(updateRideStatusFailedByRideId)
 	statement.UpdateRideStatus, _ = db.DBConnection.Preparex(updateRideStatusById)
+	statement.UpdateRideComplete, _ = db.DBConnection.Preparex(updateRideCompleteById)
 }

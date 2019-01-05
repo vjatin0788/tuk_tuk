@@ -105,8 +105,6 @@ func (ff *FFClient) verifyRideDetails(ctx context.Context, ride *model.RideDetai
 		return errors.New("Invalid Driver Status")
 	}
 
-	//add payment verifications.
-
 	return err
 }
 
@@ -118,7 +116,7 @@ func (ff *FFClient) sendPushNotificationToCustomer(ctx context.Context, ride *mo
 		"message": fmt.Sprint("Driver Arrived"),
 	}
 
-	go fbclient.AddId(ctx, driver.DeviceId).SendPushNotification(ctx, data)
+	go fbclient.SendPushNotification(ctx, data, driver.DeviceId)
 }
 
 func (ff *FFClient) GetDriverCurrentLocation(ctx context.Context, userId, rideId int64) (interface{}, error) {
@@ -188,4 +186,117 @@ func (ff *FFClient) prepareDriverLocationResponse(ctx context.Context, ride mode
 	}
 
 	return defaultResp, err
+}
+
+func (ff *FFClient) RideComplete(ctx context.Context, userId int64, rideReq RideCompleteRequest) (interface{}, error) {
+	var (
+		defaultResp *RideCompleteResponse
+		err         error
+	)
+
+	if rideReq.RideId == 0 {
+		log.Println("[RideComplete][Error] Error Ride Id is 0.")
+		return defaultResp, errors.New("Ride Id is 0")
+	}
+
+	rideDetail, err := model.TukTuk.GetRideDetailsByRideId(ctx, rideReq.RideId)
+	if err != nil {
+		log.Println("[RideComplete][Error] Error in fetching ride data", err)
+		return defaultResp, err
+	}
+
+	//it's check in case there is no ride of requested ride id.
+	if rideReq.RideId != rideDetail.Id {
+		log.Println("[RideComplete][Error] Invalid Ride id", rideDetail)
+		return defaultResp, errors.New("Invalid Ride ID.")
+	}
+
+	log.Printf("[RideComplete] Ride:%+v ", rideDetail)
+
+	return ff.prepareRideComplete(ctx, rideDetail, rideReq)
+}
+
+func (ff *FFClient) prepareRideComplete(ctx context.Context, ride model.RideDetailModel, rideReq RideCompleteRequest) (*RideCompleteResponse, error) {
+	var (
+		defaultResp *RideCompleteResponse
+		err         error
+	)
+
+	data, err := model.TukTuk.GetDriverById(ctx, ride.DriverId)
+	if err != nil {
+		log.Println("[prepareRideComplete][Error] Error in fetching data", err)
+		return defaultResp, errors.New("DB Error")
+	}
+
+	log.Printf("[prepareRideComplete] Driver Tracking data:%+v ", data)
+
+	if data.DriverID != ride.DriverId {
+		log.Printf("[prepareRideComplete][Error] Driver ID mismatch in ride details. Found id:%d, required id:%d", data.DriverID, ride.DriverId)
+		return defaultResp, errors.New("Driver Id mismatch")
+	}
+
+	//state transition
+	err = ff.RideStateTransition(ctx, &ride, common.RideStatus.COMPLETED.ID)
+	if err != nil {
+		log.Println("[prepareRideComplete][Error] Ride state Transitiion", err)
+		return defaultResp, err
+	}
+
+	//update ride details
+	ride.RideCompletedTime = time.Now().UTC().String()
+	ride.DestinationLat = rideReq.DestinationLat
+	ride.DestinationLong = rideReq.DestinationLong
+	log.Printf("[prepareRideComplete] Ride Updated:%+v ", ride)
+	rowAffectedCount, err := model.TukTuk.UpdateRideComplete(ctx, ride)
+	if err != nil {
+		log.Println("[prepareRideComplete][Error] Err in updating db", err)
+		return defaultResp, err
+	}
+
+	if rowAffectedCount == 0 {
+		log.Println("[prepareRideComplete][Error] Ride is not in valid state db,Row Affected:", rowAffectedCount)
+		return defaultResp, errors.New("Something Went Wrong.")
+	}
+
+	//hit payment method api
+	log.Printf("[RideComplete] Hitting payment api")
+	var message string
+	if ride.PaymentMethod == common.CASH {
+		message = "COLLECT CASH"
+	}
+
+	defaultResp = &RideCompleteResponse{
+		Success: true,
+		Message: message,
+		Amount:  0,
+	}
+
+	ff.sendPushNotificationRideComplete(ctx, ride)
+
+	return defaultResp, err
+}
+
+func (ff *FFClient) sendPushNotificationRideComplete(ctx context.Context, ride model.RideDetailModel) {
+	fbclient := firebase.FClient
+
+	ddata, err := model.TukTuk.GetCustomerById(ctx, ride.CustomerId)
+	if err != nil {
+		log.Println("[sendPushNotificationRideComplete][Error] Error in fetching ride data", err)
+
+	}
+
+	if ddata.CustomerId != ride.CustomerId {
+		log.Printf("[sendPushNotificationRideComplete][Error] Customer ID mismatch in ride details. Found id:%d, required id:%d", ddata.CustomerId, ride.Id)
+
+	}
+
+	data := PushNotification{
+		Type: "ride_complete",
+		Data: PushNotificationRideComplete{
+			RideId:  ride.Id,
+			Message: "RIDE COMPLETE",
+		},
+	}
+
+	go fbclient.SendPushNotification(ctx, data, ddata.DeviceId)
 }

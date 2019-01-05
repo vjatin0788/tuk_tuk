@@ -13,6 +13,7 @@ const (
 	RIDER_CANCELLED  = 1
 	NOTIFY_RIDER     = true
 	STATUS_ACTIVATE  = "Activate"
+	CASH             = "cash"
 )
 
 //Endpoints
