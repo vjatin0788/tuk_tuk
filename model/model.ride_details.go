@@ -85,6 +85,7 @@ func (model RideDetailModel) GetTable() RideDetailTabel {
 		RideBookedTime:    sql.NullString{model.RideBookedTime, false},
 		RideCompletedTime: sql.NullString{model.RideCompletedTime, false},
 		RideFailedTime:    sql.NullString{model.RideFailedTime, false},
+		RideStartTime:     sql.NullString{model.RideStartTime, false},
 		PaymentMethod:     sql.NullString{model.PaymentMethod, false},
 	}
 }
@@ -124,9 +125,9 @@ func (table RideDetailTabel) UpdateRideDetails(ctx context.Context) error {
 
 	var err error
 
-	_, err = statement.UpdateRideDetails.ExecContext(ctx, table.DriverId, table.Status,
-		table.DriverCancelled, table.RiderCancelled, table.RideBookedTime, table.RideCompletedTime,
-		table.RideFailedTime, table.RideStartTime, table.Id)
+	_, err = statement.UpdateRideDetails.ExecContext(ctx, table.Status,
+		table.DriverCancelled, table.RiderCancelled,
+		table.RideFailedTime.String, table.Id)
 	if err != nil {
 		log.Println("[UpdateRideDetails][Error] Err in inserting", err)
 		return err
@@ -148,7 +149,7 @@ func (table RideDetailTabel) updateRideDetailsAndStatus(ctx context.Context) (in
 	)
 
 	row, err := statement.UpdateRideDetailsWithStatus.ExecContext(ctx, table.DriverId, table.Status,
-		table.RideBookedTime, table.Id)
+		table.RideBookedTime.String, table.Id)
 	if err != nil {
 		log.Println("[UpdateRideDetails][Error] Err in inserting", err)
 		return rowCount, err
@@ -251,7 +252,7 @@ func (table RideDetailTabel) updateRideDetailsFailedStatus(ctx context.Context) 
 	var err error
 
 	_, err = statement.UpdateRideStatusFailed.ExecContext(ctx, table.Status,
-		table.RideFailedTime, table.Id)
+		table.RideFailedTime.String, table.Id)
 	if err != nil {
 		log.Println("[UpdateRideDetails][Error] Err in inserting", err)
 		return err
@@ -273,7 +274,7 @@ func (table RideDetailTabel) updateRideDetailsStart(ctx context.Context) (int64,
 	)
 
 	row, err := statement.UpdateRideStart.ExecContext(ctx, table.Status,
-		table.RideStartTime, table.Id)
+		table.RideStartTime.String, table.Id)
 	if err != nil {
 		log.Println("[UpdateRideDetailsStart][Error] Err in inserting", err)
 		return rowCount, err
@@ -331,7 +332,7 @@ func (table RideDetailTabel) updateRideDetailsComplete(ctx context.Context) (int
 		rowCount int64
 	)
 
-	row, err := statement.UpdateRideComplete.ExecContext(ctx, table.Status, table.RideStartTime, table.DestinationLat, table.DestinationLong, table.Id)
+	row, err := statement.UpdateRideComplete.ExecContext(ctx, table.Status, table.RideCompletedTime.String, table.DestinationLat, table.DestinationLong, table.Id)
 	if err != nil {
 		log.Println("[updateRideDetailsComplete][Error] Err in inserting", err)
 		return rowCount, err
