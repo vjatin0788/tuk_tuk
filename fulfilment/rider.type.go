@@ -13,8 +13,8 @@ type DriverDetailsResponse struct {
 	Name          string  `json:"name"`
 	Model         string  `json:"vehicle_model"`
 	VehicleNumber string  `json:"vehicle_number"`
-	PhoneNumber   string  `json:phone_number`
-	DriverImage   string  `json:driver_image`
+	PhoneNumber   string  `json:"phone_number"`
+	DriverImage   string  `json:"driver_image"`
 	Rating        string  `json:"rating"`
 	CurrentLat    float64 `json:"current_lat"`
 	CurrentLong   float64 `json:"current_long"`
@@ -83,4 +83,21 @@ type PushNotificationInvalidRide struct {
 type PushNotification struct {
 	Type string      `json:"type"`
 	Data interface{} `json:"data"`
+}
+
+type RideCompleteResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Amount  int64  `json:"amount"`
+}
+
+type RideCompleteRequest struct {
+	RideId          int64   `json:"ride_id"`
+	DestinationLat  float64 `json:"destination_lat"`
+	DestinationLong float64 `json:"destination_long"`
+}
+
+type PushNotificationRideComplete struct {
+	RideId  int64  `json:"ride_id"`
+	Message string `json:"message"`
 }

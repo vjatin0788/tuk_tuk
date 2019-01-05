@@ -1,7 +1,9 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -170,6 +172,47 @@ func (api *APIMod) RideStartHandler(rw http.ResponseWriter, r *http.Request) (in
 	data, err := fulfilment.FF.StartRide(ctx, uid, rideId)
 	if err != nil {
 		log.Println("[RequestRide][Error] Err in request ride", err)
+		return nil, err
+	}
+
+	return data, err
+}
+
+func (api *APIMod) RideCompleteHandler(rw http.ResponseWriter, r *http.Request) (interface{}, error) {
+	var (
+		err     error
+		reqBody fulfilment.RideCompleteRequest
+	)
+	ctx := r.Context()
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Println("[RideCompleteHandler] error:", err)
+		return nil, errors.New("Error Body Not found")
+	}
+
+	err = json.Unmarshal(body, &reqBody)
+	if err != nil {
+		log.Println("[RideCompleteHandler] error:", err)
+		return nil, errors.New("Error Unmarshal body")
+	}
+
+	userid := r.Header.Get("User-Id")
+	if userid == "" {
+		log.Println("[RideCompleteHandler][Error] empty user id")
+		return nil, errors.New("Empty User ID")
+	}
+
+	uid, err := strconv.ParseInt(userid, 10, 64)
+	if err != nil {
+		log.Println("[RideCompleteHandler][Error] Parsing int")
+		return nil, errors.New("Error parsing int")
+	}
+
+	data, err := fulfilment.FF.RideComplete(ctx, uid, reqBody)
+	if err != nil {
+		log.Println("[RideCompleteHandler][Error] Err in request ride", err)
 		return nil, err
 	}
 

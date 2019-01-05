@@ -69,6 +69,8 @@ func (api *APIMod) InitHandler() {
 
 	r.Handle("/v1/tuktuk/rider/driver/location", HandlerFunc(api.DriverLocationHandler))
 
+	r.Handle("/v1/tuktuk/rider/driver/complete", HandlerFunc(api.RideCompleteHandler))
+
 	http.Handle("/", r)
 	log.Println("Handler initialized")
 }
