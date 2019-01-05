@@ -2,9 +2,9 @@ package firebase
 
 import (
 	"context"
-	"errors"
 	"log"
-	"net/http"
+
+	fcm "github.com/appleboy/go-fcm"
 )
 
 func (fb *FireBase) AddIds(ctx context.Context, ids []string) *FireBase {
@@ -27,37 +27,37 @@ func (fb *FireBase) AddXd(ctx context.Context, xd string) *FireBase {
 	return fb
 }
 
-func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}, deviceId []string) error {
+func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}, deviceId string) error {
 
 	var err error
 
 	client := fb.FBaseClient
 
-	//adding ids
-	client.NewFcmRegIdsMsg(deviceId, data)
+	msg := &fcm.Message{
+		To: deviceId,
+		Data: map[string]interface{}{
+			"response": data,
+		},
+	}
 
-	//adding xds
-	client.AppendDevices(fb.Xds)
+	log.Printf("[SendPushNotification]Sending Push Notif:%+v deviceIds:%s", data)
 
-	log.Printf("[SendPushNotification]Sending Push Notif:%+v deviceIds:%+v", data, deviceId)
-
-	resp, err := client.Send()
-
+	res, err := client.Send(msg)
 	if err != nil {
 		log.Println("[SendPushNotification][Error] Err in sending notification", err)
 		return err
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		log.Println("[SendPushNotification][Error]Status code mismatch ", resp.StatusCode)
-		return errors.New("Statuscode mismatch")
-	}
+	// if res.StatusCode != http.StatusOK {
+	// 	log.Println("[SendPushNotification][Error]Status code mismatch ", resp.StatusCode)
+	// 	return errors.New("Statuscode mismatch")
+	// }
 
 	// if resp.Fail > 0 {
 	// 	log.Println("[SendPushNotification][Error]Failed to send notification ", resp.Fail)
 	// 	return errors.New("Fail TO send Notification")
 	// }
 
-	log.Printf("Resp :%+v", resp)
+	log.Printf("Resp :%+v", res)
 	return err
 }

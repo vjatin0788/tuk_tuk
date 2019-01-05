@@ -1,22 +1,26 @@
 package firebase
 
 import (
-	fcm "github.com/NaySoftware/go-fcm"
+	"log"
+
 	"github.com/TukTuk/core"
+	fcm "github.com/appleboy/go-fcm"
 )
 
 var FClient *FireBase
 
 type FireBase struct {
-	FBaseClient *fcm.FcmClient
+	FBaseClient *fcm.Client
 	Ids         []string
 	Xds         []string
 }
 
 func InitFireBase(cfg *core.Config) {
 
-	client := fcm.NewFcmClient(cfg.FireBase.ApiKey)
-
+	client, err := fcm.NewClient(cfg.FireBase.ApiKey)
+	if err != nil {
+		log.Fatal("Error in init firebase")
+	}
 	FClient = &FireBase{
 		FBaseClient: client,
 	}

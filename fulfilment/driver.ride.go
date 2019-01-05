@@ -118,11 +118,7 @@ func (ff *FFClient) sendPushNotificationToCustomer(ctx context.Context, ride *mo
 		"message": fmt.Sprint("Driver Arrived"),
 	}
 
-	deviceIds := make([]string, 0)
-	deviceIds = append(deviceIds, driver.DeviceId)
-
-	go fbclient.SendPushNotification(ctx, data, deviceIds)
-
+	go fbclient.SendPushNotification(ctx, data, driver.DeviceId)
 }
 
 func (ff *FFClient) GetDriverCurrentLocation(ctx context.Context, userId, rideId int64) (interface{}, error) {
