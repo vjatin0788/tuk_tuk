@@ -69,6 +69,8 @@ func (api *APIMod) InitHandler() {
 
 	r.Handle("/v1/tuktuk/driver/complete", HandlerFunc(api.RideCompleteHandler))
 
+	r.Handle("/v1/tuktuk/driver/status", HandlerFunc(api.DriverStatusHandler))
+
 	r.Handle("/v1/tuktuk/rider/driver/location", HandlerFunc(api.DriverLocationHandler))
 
 	r.Handle("/v1/tuktuk/rider/ride/cancel", HandlerFunc(api.RiderCancelHandler))

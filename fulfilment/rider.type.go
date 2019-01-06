@@ -113,6 +113,11 @@ type PushNotificationRideCancel struct {
 	Message string `json:"message"`
 }
 
+type PushNotificationRideStart struct {
+	RideId  int64  `json:"ride_id"`
+	Message string `json:"message"`
+}
+
 type RideCancelRequest struct {
 	RideId int64  `json:"ride_id"`
 	Reason string `json:"ride_cancel_msg"`
