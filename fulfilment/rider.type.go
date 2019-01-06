@@ -26,13 +26,15 @@ type DriverTrackingResponse struct {
 }
 
 type RideBookResponse struct {
-	DriverDetail    *DriverDetailsResponse `json:"driver_details,omitempty"`
-	SourceLat       float64                `json:"source_lat,omitempty"`
-	SourceLong      float64                `json:"source_long,omitempty"`
-	DestinationLat  float64                `json:"destination_lat,omitempty"`
-	DestinationLong float64                `json:"destination_long,omitempty"`
-	RideId          int64                  `json:"ride_id,omitempty"`
-	Message         string                 `json:"message,omitempty"`
+	DriverDetail    *DriverDetailsResponse   `json:"driver_details,omitempty"`
+	CustomerDetail  *CustomerDetailsResponse `json:"customer_details,omitempty"`
+	SourceLat       float64                  `json:"source_lat,omitempty"`
+	SourceLong      float64                  `json:"source_long,omitempty"`
+	DestinationLat  float64                  `json:"destination_lat,omitempty"`
+	DestinationLong float64                  `json:"destination_long,omitempty"`
+	RideId          int64                    `json:"ride_id,omitempty"`
+	Message         string                   `json:"message,omitempty"`
+	Status          string                   `json:"status,omitempty"`
 }
 
 type DriverData struct {
@@ -50,8 +52,12 @@ type DriverBookedResponse struct {
 }
 
 type CustomerDetailsResponse struct {
-	CustomerId int64  `json:"customer_id"`
-	Name       string `json:name`
+	CustomerId      int64   `json:"customer_id,omitempty"`
+	Name            string  `json:"name,omitempty"`
+	SourceLat       float64 `json:"source_lat,omitempty"`
+	SourceLong      float64 `json:"source_long,omitempty"`
+	DestinationLat  float64 `json:"destination_lat,omitempty"`
+	DestinationLong float64 `json:"destination_long,omitempty"`
 }
 
 type RideStartResponse struct {
@@ -103,6 +109,11 @@ type PushNotificationRideComplete struct {
 }
 
 type PushNotificationRideCancel struct {
+	RideId  int64  `json:"ride_id"`
+	Message string `json:"message"`
+}
+
+type PushNotificationRideStart struct {
 	RideId  int64  `json:"ride_id"`
 	Message string `json:"message"`
 }

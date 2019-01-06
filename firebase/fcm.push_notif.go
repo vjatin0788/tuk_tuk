@@ -7,26 +7,6 @@ import (
 	fcm "github.com/appleboy/go-fcm"
 )
 
-func (fb *FireBase) AddIds(ctx context.Context, ids []string) *FireBase {
-	fb.Ids = append(fb.Ids, ids...)
-	return fb
-}
-
-func (fb *FireBase) AddXds(ctx context.Context, xds []string) *FireBase {
-	fb.Xds = append(fb.Xds, xds...)
-	return fb
-}
-
-func (fb *FireBase) AddId(ctx context.Context, id string) *FireBase {
-	fb.Ids = append(fb.Ids, id)
-	return fb
-}
-
-func (fb *FireBase) AddXd(ctx context.Context, xd string) *FireBase {
-	fb.Xds = append(fb.Xds, xd)
-	return fb
-}
-
 func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}, deviceId string) error {
 
 	var err error

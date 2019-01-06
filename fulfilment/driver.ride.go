@@ -3,7 +3,6 @@ package fulfilment
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -76,7 +75,7 @@ func (ff *FFClient) StartRide(ctx context.Context, userId, rideId int64) (interf
 		return defaultResp, errors.New("Something Went Wrong.")
 	}
 
-	ff.sendPushNotificationToCustomer(ctx, &rideDetail, ddata)
+	ff.sendPushNotificationToCustomer(ctx, &rideDetail)
 
 	defaultResp.Success = true
 	defaultResp.CurrentLat = rideDetail.DestinationLat
@@ -108,15 +107,23 @@ func (ff *FFClient) verifyRideDetails(ctx context.Context, ride *model.RideDetai
 	return err
 }
 
-func (ff *FFClient) sendPushNotificationToCustomer(ctx context.Context, ride *model.RideDetailModel, driver model.DriverUserModel) {
+func (ff *FFClient) sendPushNotificationToCustomer(ctx context.Context, ride *model.RideDetailModel) {
 	fbclient := firebase.FClient
 
-	data := map[string]string{
-		"ride_id": fmt.Sprintf("%d", ride.Id),
-		"message": fmt.Sprint("Driver Arrived"),
+	cdata, err := model.TukTuk.GetCustomerById(ctx, ride.Id)
+	if err != nil {
+		log.Println("[GetDriverCurrentLocation][Error] Error in fetching ride data", err)
 	}
 
-	go fbclient.SendPushNotification(ctx, data, driver.DeviceId)
+	data := PushNotification{
+		Type: "ride_start",
+		Data: PushNotificationRideStart{
+			RideId:  ride.Id,
+			Message: "Ride Started",
+		},
+	}
+
+	go fbclient.SendPushNotification(ctx, data, cdata.DeviceId)
 }
 
 func (ff *FFClient) GetDriverCurrentLocation(ctx context.Context, userId, rideId int64) (interface{}, error) {
@@ -395,4 +402,56 @@ func (ff *FFClient) sendPushNotificationDriverRideCancel(ctx context.Context, ri
 	}
 
 	go fbclient.SendPushNotification(ctx, payLoad, cdata.DeviceId)
+}
+
+func (ff *FFClient) GetDriverRideStatus(ctx context.Context, id int64) (interface{}, error) {
+	var (
+		err        error
+		defaultRes []RideBookResponse
+	)
+
+	ddata, err := model.TukTuk.GetDriverUserById(ctx, id)
+	if err != nil {
+		log.Println("[GetDriverRideStatus][Error] DB error", err)
+	}
+
+	if ddata.Userid != id {
+		log.Printf("[GetDriverRideStatus][Error] Invalid driver id. found:%d, req: %d", ddata.Userid, id)
+		return defaultRes, err
+	}
+
+	//status
+	status := []int64{common.RideStatus.BOOKED.ID, common.RideStatus.PROCESSING.ID}
+
+	rideData, err := model.TukTuk.GetRideDetailStatusByDriverId(ctx, id, status)
+	if err != nil {
+		log.Printf("[GetDriverRideStatus][Error] err", err)
+		return defaultRes, err
+	}
+
+	log.Printf("[GetDriverRideStatus]Ride Details:%+v", rideData)
+
+	for _, ride := range rideData {
+
+		userData, err := model.TukTuk.GetCustomerById(ctx, ride.CustomerId)
+		if err != nil {
+			log.Println("[GetDriverRideStatus]DB err:", err)
+			return defaultRes, err
+		}
+
+		defaultRes = append(defaultRes, RideBookResponse{
+			CustomerDetail: &CustomerDetailsResponse{
+				Name: userData.Name,
+			},
+			SourceLat:       ride.SourceLat,
+			SourceLong:      ride.SourceLong,
+			DestinationLat:  ride.DestinationLat,
+			DestinationLong: ride.DestinationLong,
+			Status:          common.RideStatusMap[ride.Status].Label,
+		})
+
+	}
+
+	log.Printf("[GetDriverRideStatus]Ride resp:%+v", defaultRes)
+	return defaultRes, err
 }

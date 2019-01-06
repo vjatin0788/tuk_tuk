@@ -259,3 +259,30 @@ func (api *APIMod) DriverCancelHandler(rw http.ResponseWriter, r *http.Request) 
 
 	return data, err
 }
+
+func (api *APIMod) DriverStatusHandler(rw http.ResponseWriter, r *http.Request) (interface{}, error) {
+	var err error
+
+	ctx := r.Context()
+
+	userid := r.Header.Get("User-Id")
+	if userid == "" {
+		log.Println("[RequestStatusHandler][Error] empty user id")
+		return nil, errors.New("Empty User ID")
+	}
+
+	uid, err := strconv.ParseInt(userid, 10, 64)
+	if err != nil {
+		log.Println("[RequestStatusHandler][Error] Parsing int")
+		return nil, errors.New("Error parsing int")
+	}
+
+	data, err := fulfilment.FF.GetDriverRideStatus(ctx, uid)
+	if err != nil {
+		log.Println("[RequestStatusHandler][Error] Err in request ride", err)
+
+		return nil, err
+	}
+
+	return data, err
+}

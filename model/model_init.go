@@ -5,27 +5,28 @@ import (
 )
 
 type PreparedStatement struct {
-	GetAvailableDrivers         *sqlx.Stmt
-	InsertDriverData            *sqlx.Stmt
-	UpdateDriverData            *sqlx.Stmt
-	GetDriverById               *sqlx.Stmt
-	GetVehicleByAssignedDriver  *sqlx.Stmt
-	GetCustomerByAuth           *sqlx.Stmt
-	GetCustomerById             *sqlx.Stmt
-	GetDriverUserByAuth         *sqlx.Stmt
-	InsertInvoiceByCustomerId   *sqlx.Stmt
-	GetInvoiceByCustomerId      *sqlx.Stmt
-	InsertRideDetails           *sqlx.Stmt
-	UpdateRideDetails           *sqlx.Stmt
-	UpdateRideDetailsWithStatus *sqlx.Stmt
-	UpdateRideStatusFailed      *sqlx.Stmt
-	UpdateRideStart             *sqlx.Stmt
-	UpdateRideStatus            *sqlx.Stmt
-	UpdateRideComplete          *sqlx.Stmt
-	GetRideDetailsByRideId      *sqlx.Stmt
-	GetRideDetailsByCustomerID  *sqlx.Stmt
-	GetDriverUserById           *sqlx.Stmt
-	GetRideDetailsByDriverID    *sqlx.Stmt
+	GetAvailableDrivers             *sqlx.Stmt
+	InsertDriverData                *sqlx.Stmt
+	UpdateDriverData                *sqlx.Stmt
+	GetDriverById                   *sqlx.Stmt
+	GetVehicleByAssignedDriver      *sqlx.Stmt
+	GetCustomerByAuth               *sqlx.Stmt
+	GetCustomerById                 *sqlx.Stmt
+	GetDriverUserByAuth             *sqlx.Stmt
+	InsertInvoiceByCustomerId       *sqlx.Stmt
+	GetInvoiceByCustomerId          *sqlx.Stmt
+	InsertRideDetails               *sqlx.Stmt
+	UpdateRideDetails               *sqlx.Stmt
+	UpdateRideDetailsWithStatus     *sqlx.Stmt
+	UpdateRideStatusFailed          *sqlx.Stmt
+	UpdateRideStart                 *sqlx.Stmt
+	UpdateRideStatus                *sqlx.Stmt
+	UpdateRideComplete              *sqlx.Stmt
+	GetRideDetailsByRideId          *sqlx.Stmt
+	GetRideDetailsByCustomerID      *sqlx.Stmt
+	GetDriverUserById               *sqlx.Stmt
+	GetRideDetailsByDriverID        *sqlx.Stmt
+	GetRideDetailStatusByCustomerID *sqlx.Stmt
 }
 
 var (
@@ -53,6 +54,8 @@ var (
 	getRideDetailsByRideId             = `SELECT * FROM tb_ride_details WHERE id=?`
 	getRideDetailsByCustomerID         = `SELECT * FROM tb_ride_details WHERE customer_id=? ORDER BY id DESC LIMIT 1`
 	getRideDetailsByDriverID           = `SELECT * FROM tb_ride_details WHERE driver_id=? ORDER BY id DESC LIMIT 1`
+	getRideDetailsStatusByCustomerID   = `SELECT * FROM tb_ride_details WHERE customer_id=? AND status IN (?) ORDER BY id`
+	getRideDetailsStatusByDriverID     = `SELECT * FROM tb_ride_details WHERE driver_id=? AND status IN (?) ORDER BY id`
 )
 
 func InitModel(db *DBTuktuk) {
@@ -75,4 +78,5 @@ func InitModel(db *DBTuktuk) {
 	statement.UpdateRideStatusFailed, _ = db.DBConnection.Preparex(updateRideStatusFailedByRideId)
 	statement.UpdateRideStatus, _ = db.DBConnection.Preparex(updateRideStatusById)
 	statement.UpdateRideComplete, _ = db.DBConnection.Preparex(updateRideCompleteById)
+	statement.GetRideDetailStatusByCustomerID, _ = db.DBConnection.Preparex(getRideDetailsStatusByCustomerID)
 }

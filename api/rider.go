@@ -150,3 +150,30 @@ func (api *APIMod) RiderCancelHandler(rw http.ResponseWriter, r *http.Request) (
 
 	return data, err
 }
+
+func (api *APIMod) RiderStatusHandler(rw http.ResponseWriter, r *http.Request) (interface{}, error) {
+	var err error
+
+	ctx := r.Context()
+
+	userid := r.Header.Get("User-Id")
+	if userid == "" {
+		log.Println("[RequestStatusHandler][Error] empty user id")
+		return nil, errors.New("Empty User ID")
+	}
+
+	uid, err := strconv.ParseInt(userid, 10, 64)
+	if err != nil {
+		log.Println("[RequestStatusHandler][Error] Parsing int")
+		return nil, errors.New("Error parsing int")
+	}
+
+	data, err := fulfilment.FF.GetCustomerRideStatus(ctx, uid)
+	if err != nil {
+		log.Println("[RequestStatusHandler][Error] Err in request ride", err)
+
+		return nil, err
+	}
+
+	return data, err
+}

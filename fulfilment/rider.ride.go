@@ -105,3 +105,73 @@ func (ff *FFClient) sendPushNotificationRideCancel(ctx context.Context, ride mod
 
 	go fbclient.SendPushNotification(ctx, payLoad, data.DeviceId)
 }
+
+func (ff *FFClient) GetCustomerRideStatus(ctx context.Context, custId int64) (interface{}, error) {
+	var (
+		err        error
+		defaultRes []RideBookResponse
+	)
+
+	userData, err := model.TukTuk.GetCustomerById(ctx, custId)
+	if err != nil {
+		log.Println("[GetCustomerRideStatus]DB err:", err)
+		return defaultRes, err
+	}
+
+	if userData.CustomerId != custId {
+		log.Printf("[GetCustomerRideStatus][Error] Invalid customer id. found:%d, req: %d", userData.CustomerId, custId)
+		return defaultRes, err
+	}
+
+	//status
+	status := []int64{common.RideStatus.REQUESTED.ID, common.RideStatus.BOOKED.ID, common.RideStatus.PROCESSING.ID}
+
+	rideData, err := model.TukTuk.GetRideDetailStatusByCustomerId(ctx, custId, status)
+	if err != nil {
+		log.Printf("[GetCustomerRideStatus][Error] err", err)
+		return defaultRes, err
+	}
+
+	for idx, ride := range rideData {
+		ddata, err := model.TukTuk.GetDriverUserById(ctx, ride.DriverId)
+		if err != nil {
+			log.Println("[GetCustomerRideStatus][Error] DB error", err)
+		}
+
+		idForVehicle := []int64{ride.DriverId}
+		vehicles, err := model.TukTuk.GetVehicleByAssignedDriver(ctx, idForVehicle)
+		if err != nil {
+			log.Println("[GetCustomerRideStatus][Error] Error in fetching vehicle data", err)
+			return nil, err
+		}
+
+		driver, err := model.TukTuk.GetDriverById(ctx, ride.DriverId)
+		if err != nil {
+			log.Println("[GetCustomerRideStatus][Error] Error in fetching data", err)
+			return nil, errors.New("Empty fetching data")
+		}
+
+		defaultRes = append(defaultRes, RideBookResponse{
+			DriverDetail: &DriverDetailsResponse{
+				DriverId:    ddata.Userid,
+				Name:        ddata.Name,
+				CurrentLat:  driver.CurrentLatitude,
+				CurrentLong: driver.CurrentLongitude,
+				DriverImage: ddata.Driverpic,
+			},
+			SourceLat:       ride.SourceLat,
+			SourceLong:      ride.SourceLong,
+			DestinationLat:  ride.DestinationLat,
+			DestinationLong: ride.DestinationLong,
+			Status:          common.RideStatusMap[ride.Status].Label,
+		})
+
+		if len(vehicles) != 0 {
+			defaultRes[idx].DriverDetail.Model = vehicles[0].Model
+			defaultRes[idx].DriverDetail.VehicleNumber = vehicles[0].VehicleNumber
+			defaultRes[idx].DriverDetail.VehicleType = vehicles[0].VehicleType
+		}
+	}
+
+	return defaultRes, err
+}
