@@ -11,8 +11,7 @@ var FClient *FireBase
 
 type FireBase struct {
 	FBaseClient *fcm.Client
-	Ids         []string
-	Xds         []string
+	Timeout     int64
 }
 
 func InitFireBase(cfg *core.Config) {
@@ -21,6 +20,7 @@ func InitFireBase(cfg *core.Config) {
 	if err != nil {
 		log.Fatal("Error in init firebase")
 	}
+
 	FClient = &FireBase{
 		FBaseClient: client,
 	}

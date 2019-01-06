@@ -75,6 +75,8 @@ func (api *APIMod) InitHandler() {
 
 	r.Handle("/v1/tuktuk/rider/request", HandlerFunc(api.RequestRideHandler))
 
+	r.Handle("/v1/tuktuk/rider/status", HandlerFunc(api.RiderStatusHandler))
+
 	http.Handle("/", r)
 	log.Println("Handler initialized")
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"log"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type RideDetailModel struct {
@@ -369,4 +371,42 @@ func (table RideDetailTabel) updateRideDetailsComplete(ctx context.Context) (int
 	rowCount = rowsAffectedCount
 
 	return rowCount, err
+}
+
+func (db *DBTuktuk) GetRideDetailStatusByCustomerId(ctx context.Context, id int64, status []int64) ([]RideDetailModel, error) {
+	var (
+		rideTable []RideDetailTabel
+		rideModel []RideDetailModel
+		err       error
+	)
+
+	//convert into slice
+	query, args, err := sqlx.In(getRideDetailsStatusByCustomerID, id, status)
+	if err != nil {
+		log.Println("[GetRideDetailStatusByCustomerId][Error] Err in sqlx IN", err)
+		return rideModel, err
+	}
+
+	query = db.DBConnection.Rebind(query)
+	row, err := db.DBConnection.QueryxContext(ctx, query, args...)
+	if err != nil {
+		log.Println("[GetRideDetailStatusByCustomerId][Error] Err in fetching data from db", err)
+		return rideModel, err
+	}
+
+	for row.Next() {
+		var rt RideDetailTabel
+		err := row.StructScan(&rt)
+		if err != nil {
+			log.Println("[GetRideDetailStatusByCustomerId][Error] Err in scanning row", err)
+			return rideModel, err
+		}
+		rideTable = append(rideTable, rt)
+	}
+
+	for _, table := range rideTable {
+		rideModel = append(rideModel, table.GetModel())
+	}
+
+	return rideModel, err
 }
