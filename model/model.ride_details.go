@@ -24,6 +24,9 @@ type RideDetailModel struct {
 	RideFailedTime    string  `db:"ride_failed_time" json:"ride_failed_time"`
 	RideStartTime     string  `db:"ride_start_time" json:"ride_start_time"`
 	PaymentMethod     string  `db:"payment_method" json:"payment_method"`
+	RideCancelReason  string  `db:"ride_cancel_msg" json:"ride_cancel_msg"`
+	CustomerRating    int64   `db:"customer_rating" json:"customer_rating"`
+	DriverRating      int64   `db:"driver_rating" json:"driver_rating"`
 }
 
 type RideDetailTabel struct {
@@ -44,6 +47,9 @@ type RideDetailTabel struct {
 	RideFailedTime    sql.NullString `db:"ride_failed_time" json:"ride_failed_time"`
 	RideStartTime     sql.NullString `db:"ride_start_time" json:"ride_start_time"`
 	PaymentMethod     sql.NullString `db:"payment_method" json:"payment_method"`
+	RideCancelReason  sql.NullString `db:"ride_cancel_msg" json:"ride_cancel_msg"`
+	CustomerRating    sql.NullInt64  `db:"customer_rating" json:"customer_rating"`
+	DriverRating      sql.NullInt64  `db:"driver_rating" json:"driver_rating"`
 }
 
 func (table RideDetailTabel) GetModel() RideDetailModel {
@@ -65,6 +71,9 @@ func (table RideDetailTabel) GetModel() RideDetailModel {
 		RideFailedTime:    table.RideFailedTime.String,
 		RideStartTime:     table.RideStartTime.String,
 		PaymentMethod:     table.PaymentMethod.String,
+		RideCancelReason:  table.RideCancelReason.String,
+		CustomerRating:    table.CustomerRating.Int64,
+		DriverRating:      table.DriverRating.Int64,
 	}
 }
 
@@ -87,6 +96,9 @@ func (model RideDetailModel) GetTable() RideDetailTabel {
 		RideFailedTime:    sql.NullString{model.RideFailedTime, false},
 		RideStartTime:     sql.NullString{model.RideStartTime, false},
 		PaymentMethod:     sql.NullString{model.PaymentMethod, false},
+		RideCancelReason:  sql.NullString{model.RideCancelReason, false},
+		DriverRating:      sql.NullInt64{model.DriverRating, false},
+		CustomerRating:    sql.NullInt64{model.CustomerRating, false},
 	}
 }
 
@@ -115,25 +127,35 @@ func (table RideDetailTabel) InsertRideDetails(ctx context.Context) (int64, erro
 }
 
 //it should be used if you have all data that need to be updated.
-func (db *DBTuktuk) UpdateRide(ctx context.Context, rideModel RideDetailModel) error {
+func (db *DBTuktuk) UpdateRide(ctx context.Context, rideModel RideDetailModel) (int64, error) {
 	//validations neeed to be inserted here
-	err := rideModel.GetTable().UpdateRideDetails(ctx)
-	return err
+	return rideModel.GetTable().UpdateRideDetails(ctx)
 }
 
-func (table RideDetailTabel) UpdateRideDetails(ctx context.Context) error {
+func (table RideDetailTabel) UpdateRideDetails(ctx context.Context) (int64, error) {
 
-	var err error
+	var (
+		err      error
+		rowCount int64
+	)
 
-	_, err = statement.UpdateRideDetails.ExecContext(ctx, table.Status,
-		table.DriverCancelled, table.RiderCancelled,
+	row, err := statement.UpdateRideDetails.ExecContext(ctx, table.Status,
+		table.DriverCancelled.Int64, table.RiderCancelled.Int64,
 		table.RideFailedTime.String, table.Id)
 	if err != nil {
 		log.Println("[UpdateRideDetails][Error] Err in inserting", err)
-		return err
+		return rowCount, err
 	}
 
-	return err
+	rowsAffectedCount, err := row.RowsAffected()
+	if err != nil {
+		log.Println("[UpdateRideDetails][Error] Err in getting row affected count", err)
+		return rowCount, err
+	}
+
+	rowCount = rowsAffectedCount
+
+	return rowCount, err
 }
 
 func (db *DBTuktuk) UpdateRideWithStatus(ctx context.Context, rideModel RideDetailModel) (int64, error) {
