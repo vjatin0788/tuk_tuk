@@ -221,7 +221,7 @@ func (ff *FFClient) rideResponse(ctx context.Context, driverId int64, ride *mode
 	}
 
 	resp = RideBookResponse{
-		DriverDetail: DriverDetailsResponse{
+		DriverDetail: &DriverDetailsResponse{
 			DriverId:      ddata.Userid,
 			Name:          ddata.Name,
 			Model:         vehicles[0].Model,

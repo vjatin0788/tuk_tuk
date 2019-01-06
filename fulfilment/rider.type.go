@@ -9,16 +9,16 @@ type RiderAvailableResponse struct {
 }
 
 type DriverDetailsResponse struct {
-	DriverId      int64   `json:"driver_id"`
-	Name          string  `json:"name"`
-	Model         string  `json:"vehicle_model"`
-	VehicleNumber string  `json:"vehicle_number"`
-	PhoneNumber   string  `json:"phone_number"`
-	DriverImage   string  `json:"driver_image"`
-	Rating        string  `json:"rating"`
-	CurrentLat    float64 `json:"current_lat"`
-	CurrentLong   float64 `json:"current_long"`
-	VehicleType   string  `json:"vehicle_type"`
+	DriverId      int64   `json:"driver_id,omitempty"`
+	Name          string  `json:"name,omitempty"`
+	Model         string  `json:"vehicle_model,omitempty"`
+	VehicleNumber string  `json:"vehicle_number,omitempty"`
+	PhoneNumber   string  `json:"phone_number,omitempty"`
+	DriverImage   string  `json:"driver_image,omitempty"`
+	Rating        string  `json:"rating,omitempty"`
+	CurrentLat    float64 `json:"current_lat,omitempty"`
+	CurrentLong   float64 `json:"current_long,omitempty"`
+	VehicleType   string  `json:"vehicle_type,omitempty"`
 }
 
 type DriverTrackingResponse struct {
@@ -26,13 +26,13 @@ type DriverTrackingResponse struct {
 }
 
 type RideBookResponse struct {
-	DriverDetail    DriverDetailsResponse `json:"driver_details"`
-	SourceLat       float64               `json:"source_lat"`
-	SourceLong      float64               `json:"source_long"`
-	DestinationLat  float64               `json:"destination_lat"`
-	DestinationLong float64               `json:"destination_long"`
-	RideId          int64                 `json:"ride_id"`
-	Message         string                `json:"message"`
+	DriverDetail    *DriverDetailsResponse `json:"driver_details,omitempty"`
+	SourceLat       float64                `json:"source_lat,omitempty"`
+	SourceLong      float64                `json:"source_long,omitempty"`
+	DestinationLat  float64                `json:"destination_lat,omitempty"`
+	DestinationLong float64                `json:"destination_long,omitempty"`
+	RideId          int64                  `json:"ride_id,omitempty"`
+	Message         string                 `json:"message,omitempty"`
 }
 
 type DriverData struct {
@@ -100,4 +100,18 @@ type RideCompleteRequest struct {
 type PushNotificationRideComplete struct {
 	RideId  int64  `json:"ride_id"`
 	Message string `json:"message"`
+}
+
+type PushNotificationRideCancel struct {
+	RideId  int64  `json:"ride_id"`
+	Message string `json:"message"`
+}
+
+type RideCancelRequest struct {
+	RideId int64  `json:"ride_id"`
+	Reason string `json:"ride_cancel_msg"`
+}
+
+type RideCancelResponse struct {
+	Success bool `json:"success"`
 }

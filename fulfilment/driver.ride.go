@@ -300,3 +300,99 @@ func (ff *FFClient) sendPushNotificationRideComplete(ctx context.Context, ride m
 
 	go fbclient.SendPushNotification(ctx, data, ddata.DeviceId)
 }
+
+func (ff *FFClient) DriverRideCancel(ctx context.Context, userId int64, rideReq RideCancelRequest) (interface{}, error) {
+	var (
+		defaultResp *RideCancelResponse
+		err         error
+	)
+
+	if rideReq.RideId == 0 {
+		log.Println("[DriverRideCancel][Error] Error Ride Id is 0.")
+		return defaultResp, errors.New("Ride Id is 0")
+	}
+
+	rideDetail, err := model.TukTuk.GetRideDetailsByRideId(ctx, rideReq.RideId)
+	if err != nil {
+		log.Println("[DriverRideCancel][Error] Error in fetching ride data", err)
+		return defaultResp, err
+	}
+
+	//it's check in case there is no ride of requested ride id.
+	if rideReq.RideId != rideDetail.Id {
+		log.Println("[DriverRideCancel][Error] Invalid Ride id", rideDetail)
+		return defaultResp, errors.New("Invalid Ride ID.")
+	}
+
+	log.Printf("[DriverRideCancel] Ride:%+v ", rideDetail)
+
+	return ff.prepareDriverRideCancelReq(ctx, rideDetail, rideReq)
+}
+
+func (ff *FFClient) prepareDriverRideCancelReq(ctx context.Context, ride model.RideDetailModel, rideReq RideCancelRequest) (*RideCancelResponse, error) {
+	var (
+		defaultResp *RideCancelResponse
+		err         error
+	)
+
+	//state transition
+	err = ff.RideStateTransition(ctx, &ride, common.RideStatus.FAILED.ID)
+	if err != nil {
+		log.Println("[prepareDriverRideCancelReq][Error] Ride state Transitiion", err)
+		return defaultResp, err
+	}
+
+	//update ride details
+	ride.RideFailedTime = time.Now().UTC().String()
+	ride.DriverCancelled = 1
+	ride.RideCancelReason = rideReq.Reason
+	log.Printf("[prepareDriverRideCancelReq] Ride Updated:%+v ", ride)
+
+	rowAffectedCount, err := model.TukTuk.UpdateRide(ctx, ride)
+	if err != nil {
+		log.Println("[prepareDriverRideCancelReq][Error] Err in updating db", err)
+		return defaultResp, err
+	}
+
+	if rowAffectedCount == 0 {
+		log.Println("[prepareDriverRideCancelReq][Error] Ride is not in valid state db,Row Affected:", rowAffectedCount)
+		return defaultResp, errors.New("Something Went Wrong.")
+	}
+
+	//check other validations
+	log.Printf("[prepareDriverRideCancelReq] check other validations")
+
+	defaultResp = &RideCancelResponse{
+		Success: true,
+	}
+
+	//add error in all sending notifications
+	ff.sendPushNotificationDriverRideCancel(ctx, ride)
+
+	return defaultResp, err
+}
+
+func (ff *FFClient) sendPushNotificationDriverRideCancel(ctx context.Context, ride model.RideDetailModel) {
+	fbclient := firebase.FClient
+
+	cdata, err := model.TukTuk.GetCustomerById(ctx, ride.CustomerId)
+	if err != nil {
+		log.Println("[sendPushNotificationDriverRideCancel][Error] Error in fetching ride data", err)
+	}
+
+	if cdata.CustomerId != ride.CustomerId {
+		log.Printf("[sendPushNotificationDriverRideCancel][Error] Customer ID mismatch in ride details. Found id:%d, required id:%d", cdata.CustomerId, ride.CustomerId)
+	}
+
+	log.Printf("[sendPushNotificationRideCancel] customer data:%+v ", cdata)
+
+	payLoad := PushNotification{
+		Type: "ride_cancel",
+		Data: PushNotificationRideCancel{
+			RideId:  ride.Id,
+			Message: "RIDE CANCEL",
+		},
+	}
+
+	go fbclient.SendPushNotification(ctx, payLoad, cdata.DeviceId)
+}
