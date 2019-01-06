@@ -155,7 +155,6 @@ func (ff *FFClient) GetCustomerRideStatus(ctx context.Context, custId int64) (in
 			DriverDetail: &DriverDetailsResponse{
 				DriverId:    ddata.Userid,
 				Name:        ddata.Name,
-				PhoneNumber: "08071996575",
 				CurrentLat:  driver.CurrentLatitude,
 				CurrentLong: driver.CurrentLongitude,
 				DriverImage: ddata.Driverpic,
