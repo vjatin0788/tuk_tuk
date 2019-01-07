@@ -16,6 +16,9 @@ func (api *APIMod) DriverWebhook(rw http.ResponseWriter, r *http.Request) (inter
 
 	ctx := r.Context()
 
+	dateTime := r.FormValue("date_time")
+	locType := r.FormValue("loc_type")
+
 	lat := r.FormValue("lat")
 	latVal, err := strconv.ParseFloat(lat, 64)
 	if err != nil {
@@ -62,7 +65,7 @@ func (api *APIMod) DriverWebhook(rw http.ResponseWriter, r *http.Request) (inter
 		return nil, errors.New("User Id mismatch")
 	}
 
-	data, err := fulfilment.FF.DriverTracking(ctx, latVal, longVal, driverId)
+	data, err := fulfilment.FF.DriverTracking(ctx, latVal, longVal, driverId, dateTime, locType)
 	if err != nil {
 		log.Println("[DriverWebhook][Error] Error in updating details", err)
 		return nil, err
@@ -267,19 +270,19 @@ func (api *APIMod) DriverStatusHandler(rw http.ResponseWriter, r *http.Request) 
 
 	userid := r.Header.Get("User-Id")
 	if userid == "" {
-		log.Println("[RequestStatusHandler][Error] empty user id")
+		log.Println("[DriverStatusHandler][Error] empty user id")
 		return nil, errors.New("Empty User ID")
 	}
 
 	uid, err := strconv.ParseInt(userid, 10, 64)
 	if err != nil {
-		log.Println("[RequestStatusHandler][Error] Parsing int")
+		log.Println("[DriverStatusHandler][Error] Parsing int")
 		return nil, errors.New("Error parsing int")
 	}
 
 	data, err := fulfilment.FF.GetDriverRideStatus(ctx, uid)
 	if err != nil {
-		log.Println("[RequestStatusHandler][Error] Err in request ride", err)
+		log.Println("[DriverStatusHandler][Error] Err in request ride", err)
 
 		return nil, err
 	}

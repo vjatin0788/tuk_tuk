@@ -47,60 +47,6 @@ func verifyLocation(userLat, userLong float64) bool {
 	return false
 }
 
-func (ff *FFClient) DriverTracking(ctx context.Context, userLat, userLong float64, driverId int64) (interface{}, error) {
-	//logic comes here
-	var (
-		err    error
-		driver model.DriverTrackingModel
-	)
-
-	defaultRes := DriverTrackingResponse{}
-
-	if userLat == 0 || userLong == 0 {
-		return nil, errors.New("Empty lat or long")
-	}
-
-	driver, err = model.TukTuk.GetDriverById(ctx, driverId)
-	if err != nil {
-		log.Println("[DriverTracking][Error] Error in fetching data", err)
-		return nil, errors.New("Empty fetching data")
-	}
-
-	driverModel := model.DriverTrackingModel{
-		DriverID:               driverId,
-		CurrentLatitude:        userLat,
-		CurrentLongitude:       userLong,
-		CurrentLatitudeRadian:  lib.Rad(userLat),
-		CurrentLongitudeRadian: lib.Rad(userLong),
-	}
-
-	log.Println("driver id:", driver.DriverID)
-	if driver.DriverID == 0 {
-		err = model.TukTuk.Create(ctx, driverModel)
-		if err != nil {
-			log.Println("[DriverTracking][Error] Error in inserting data ", err)
-			return nil, errors.New("Empty inserting driver details")
-		}
-	} else {
-		driverModel.LastLatitude = driver.CurrentLatitude
-		driverModel.LastLongitude = driver.CurrentLongitude
-		driverModel.LastLatitudeRadian = driver.CurrentLatitudeRadian
-		driverModel.LastLongitudeRadian = driver.CurrentLongitudeRadian
-
-		//we can add check if last and current location same than no need to update db
-
-		err = model.TukTuk.Update(ctx, driverModel)
-		if err != nil {
-			log.Println("[DriverTracking][Error] Error in updating data ", err)
-			return nil, errors.New("Empty updating driver details")
-		}
-	}
-
-	defaultRes.Success = true
-
-	return defaultRes, err
-}
-
 func getGetAvailableDriverMap(ctx context.Context, driverModel []model.DriverTrackingModel) (map[int64]model.DriverTrackingModel, []int64) {
 
 	driverMap := make(map[int64]model.DriverTrackingModel)

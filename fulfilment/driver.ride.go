@@ -9,6 +9,7 @@ import (
 
 	"github.com/TukTuk/common"
 	"github.com/TukTuk/firebase"
+	"github.com/TukTuk/lib"
 
 	"github.com/TukTuk/model"
 )
@@ -75,7 +76,15 @@ func (ff *FFClient) StartRide(ctx context.Context, userId, rideId int64) (interf
 		return defaultResp, errors.New("Something Went Wrong.")
 	}
 
-	ff.sendPushNotificationToCustomer(ctx, &rideDetail)
+	dataPush := PushNotification{
+		Type: "ride_start",
+		Data: PushNotificationRideStart{
+			RideId:  rideDetail.Id,
+			Message: "Ride Started",
+		},
+	}
+
+	ff.sendPushNotificationToCustomer(ctx, rideDetail, dataPush)
 
 	defaultResp.Success = true
 	defaultResp.CurrentLat = rideDetail.DestinationLat
@@ -105,25 +114,6 @@ func (ff *FFClient) verifyRideDetails(ctx context.Context, ride *model.RideDetai
 	}
 
 	return err
-}
-
-func (ff *FFClient) sendPushNotificationToCustomer(ctx context.Context, ride *model.RideDetailModel) {
-	fbclient := firebase.FClient
-
-	cdata, err := model.TukTuk.GetCustomerById(ctx, ride.Id)
-	if err != nil {
-		log.Println("[GetDriverCurrentLocation][Error] Error in fetching ride data", err)
-	}
-
-	data := PushNotification{
-		Type: "ride_start",
-		Data: PushNotificationRideStart{
-			RideId:  ride.Id,
-			Message: "Ride Started",
-		},
-	}
-
-	go fbclient.SendPushNotification(ctx, data, cdata.DeviceId)
 }
 
 func (ff *FFClient) GetDriverCurrentLocation(ctx context.Context, userId, rideId int64) (interface{}, error) {
@@ -272,37 +262,35 @@ func (ff *FFClient) prepareRideComplete(ctx context.Context, ride model.RideDeta
 		message = "COLLECT CASH"
 	}
 
+	dataPush := PushNotification{
+		Type: "ride_complete",
+		Data: PushNotificationRideComplete{
+			RideId:  ride.Id,
+			Message: "RIDE COMPLETE",
+		},
+	}
+
+	ff.sendPushNotificationToCustomer(ctx, ride, dataPush)
+
 	defaultResp = &RideCompleteResponse{
 		Success: true,
 		Message: message,
 		Amount:  0,
 	}
 
-	ff.sendPushNotificationRideComplete(ctx, ride)
-
 	return defaultResp, err
 }
 
-func (ff *FFClient) sendPushNotificationRideComplete(ctx context.Context, ride model.RideDetailModel) {
+func (ff *FFClient) sendPushNotificationToCustomer(ctx context.Context, ride model.RideDetailModel, data PushNotification) {
 	fbclient := firebase.FClient
 
 	ddata, err := model.TukTuk.GetCustomerById(ctx, ride.CustomerId)
 	if err != nil {
 		log.Println("[sendPushNotificationRideComplete][Error] Error in fetching ride data", err)
-
 	}
 
 	if ddata.CustomerId != ride.CustomerId {
 		log.Printf("[sendPushNotificationRideComplete][Error] Customer ID mismatch in ride details. Found id:%d, required id:%d", ddata.CustomerId, ride.Id)
-
-	}
-
-	data := PushNotification{
-		Type: "ride_complete",
-		Data: PushNotificationRideComplete{
-			RideId:  ride.Id,
-			Message: "RIDE COMPLETE",
-		},
 	}
 
 	go fbclient.SendPushNotification(ctx, data, ddata.DeviceId)
@@ -448,10 +436,103 @@ func (ff *FFClient) GetDriverRideStatus(ctx context.Context, id int64) (interfac
 			DestinationLat:  ride.DestinationLat,
 			DestinationLong: ride.DestinationLong,
 			Status:          common.RideStatusMap[ride.Status].Label,
+			RideId:          ride.Id,
 		})
 
 	}
 
 	log.Printf("[GetDriverRideStatus]Ride resp:%+v", defaultRes)
 	return defaultRes, err
+}
+
+func (ff *FFClient) DriverTracking(ctx context.Context, userLat, userLong float64, driverId int64, dateTime, locType string) (interface{}, error) {
+	//logic comes here
+	var (
+		err    error
+		driver model.DriverTrackingModel
+	)
+
+	defaultRes := DriverTrackingResponse{}
+
+	if userLat == 0 || userLong == 0 {
+		return nil, errors.New("Empty lat or long")
+	}
+
+	driverData, err := model.TukTuk.GetDriverUserById(ctx, driverId)
+	if err != nil {
+		log.Println("[updateTrackingDetails][Error] Error ", err)
+		return nil, err
+	}
+
+	if driverData.Userid != driverId {
+		log.Println("[updateTrackingDetails][Error] Driver ID mismatch ")
+		return nil, errors.New("Driver ID Mismatch")
+	}
+
+	driver, err = model.TukTuk.GetDriverById(ctx, driverId)
+	if err != nil {
+		log.Println("[DriverTracking][Error] Error in fetching data", err)
+		return nil, errors.New("Empty fetching data")
+	}
+
+	driverModel := model.DriverTrackingModel{
+		DriverID:               driverId,
+		CurrentLatitude:        userLat,
+		CurrentLongitude:       userLong,
+		CurrentLatitudeRadian:  lib.Rad(userLat),
+		CurrentLongitudeRadian: lib.Rad(userLong),
+	}
+
+	log.Println("driver id:", driver.DriverID)
+	if driver.DriverID == 0 {
+		err = model.TukTuk.Create(ctx, driverModel)
+		if err != nil {
+			log.Println("[DriverTracking][Error] Error in inserting data ", err)
+			return nil, errors.New("Empty inserting driver details")
+		}
+	} else {
+		driverModel.LastLatitude = driver.CurrentLatitude
+		driverModel.LastLongitude = driver.CurrentLongitude
+		driverModel.LastLatitudeRadian = driver.CurrentLatitudeRadian
+		driverModel.LastLongitudeRadian = driver.CurrentLongitudeRadian
+
+		//we can add check if last and current location same than no need to update db
+
+		err = model.TukTuk.Update(ctx, driverModel)
+		if err != nil {
+			log.Println("[DriverTracking][Error] Error in updating data ", err)
+			return nil, errors.New("Empty updating driver details")
+		}
+	}
+
+	err = ff.updateTrackingDetails(ctx, driverModel, dateTime, locType, driverData)
+	if err != nil {
+		log.Println("[DriverTracking][Error] Error in updating tracking data ", err)
+		return nil, err
+	}
+
+	defaultRes.Success = true
+
+	return defaultRes, err
+}
+
+func (ff *FFClient) updateTrackingDetails(ctx context.Context, drModel model.DriverTrackingModel, dateTime, locType string, driver model.DriverUserModel) error {
+	var err error
+
+	trackingModel := model.TrackingModel{
+		Latitude:     drModel.CurrentLatitude,
+		Longitutde:   drModel.CurrentLongitude,
+		UserId:       driver.Userid,
+		EmailId:      driver.Emailid,
+		Date:         dateTime,
+		TrackingType: locType,
+	}
+
+	_, err = model.TukTuk.CreateTracking(ctx, trackingModel)
+	if err != nil {
+		log.Println("[updateTrackingDetails][Error] Error inserting data ", err)
+		return err
+	}
+
+	return err
 }

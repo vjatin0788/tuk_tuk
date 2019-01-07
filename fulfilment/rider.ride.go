@@ -164,6 +164,7 @@ func (ff *FFClient) GetCustomerRideStatus(ctx context.Context, custId int64) (in
 			DestinationLat:  ride.DestinationLat,
 			DestinationLong: ride.DestinationLong,
 			Status:          common.RideStatusMap[ride.Status].Label,
+			RideId:          ride.Id,
 		})
 
 		if len(vehicles) != 0 {

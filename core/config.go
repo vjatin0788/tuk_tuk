@@ -20,7 +20,8 @@ type GMaps struct {
 }
 
 type FBase struct {
-	ApiKey string
+	ApiKey  string
+	Timeout uint
 }
 
 type ServerConfig struct {
@@ -34,7 +35,8 @@ func InitConfig() *Config {
 			ApiKey:   common.API_KEY,
 		},
 		FireBase: FBase{
-			ApiKey: FIREBASE_KEY,
+			ApiKey:  FIREBASE_KEY,
+			Timeout: FIREBASE_TIMEOUT,
 		},
 		Server: ServerConfig{
 			RideRequestTime: RIDE_REQUEST_TIME,

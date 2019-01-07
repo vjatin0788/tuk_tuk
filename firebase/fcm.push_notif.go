@@ -18,6 +18,7 @@ func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}, 
 		Data: map[string]interface{}{
 			"response": data,
 		},
+		TimeToLive: fb.Timeout,
 	}
 
 	log.Printf("[SendPushNotification]Sending Push Notif:%+v deviceIds:%s", data)

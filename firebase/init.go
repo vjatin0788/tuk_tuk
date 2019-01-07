@@ -11,7 +11,7 @@ var FClient *FireBase
 
 type FireBase struct {
 	FBaseClient *fcm.Client
-	Timeout     int64
+	Timeout     *uint
 }
 
 func InitFireBase(cfg *core.Config) {
@@ -23,5 +23,6 @@ func InitFireBase(cfg *core.Config) {
 
 	FClient = &FireBase{
 		FBaseClient: client,
+		Timeout:     &cfg.FireBase.Timeout,
 	}
 }
