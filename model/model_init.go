@@ -27,6 +27,7 @@ type PreparedStatement struct {
 	GetDriverUserById               *sqlx.Stmt
 	GetRideDetailsByDriverID        *sqlx.Stmt
 	GetRideDetailStatusByCustomerID *sqlx.Stmt
+	InsertTrackingData              *sqlx.Stmt
 }
 
 var (
@@ -56,6 +57,7 @@ var (
 	getRideDetailsByDriverID           = `SELECT * FROM tb_ride_details WHERE driver_id=? ORDER BY id DESC LIMIT 1`
 	getRideDetailsStatusByCustomerID   = `SELECT * FROM tb_ride_details WHERE customer_id=? AND status IN (?) ORDER BY id`
 	getRideDetailsStatusByDriverID     = `SELECT * FROM tb_ride_details WHERE driver_id=? AND status IN (?) ORDER BY id`
+	insertTrackingData                 = `INSERT INTO tbtrackingdata(emailid,lat,lng,datetime,tracking_type,user_id) VALUES(?,?,?,?,?,?)`
 )
 
 func InitModel(db *DBTuktuk) {
@@ -79,4 +81,5 @@ func InitModel(db *DBTuktuk) {
 	statement.UpdateRideStatus, _ = db.DBConnection.Preparex(updateRideStatusById)
 	statement.UpdateRideComplete, _ = db.DBConnection.Preparex(updateRideCompleteById)
 	statement.GetRideDetailStatusByCustomerID, _ = db.DBConnection.Preparex(getRideDetailsStatusByCustomerID)
+	statement.InsertTrackingData, _ = db.DBConnection.Preparex(insertTrackingData)
 }
