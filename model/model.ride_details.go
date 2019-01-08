@@ -405,3 +405,20 @@ func (db *DBTuktuk) GetRideDetailStatusByDriverId(ctx context.Context, id int64,
 
 	return rideModel, err
 }
+
+func (db *DBTuktuk) GetRideDetailsByCustomerIdAndStatus(ctx context.Context, id, status int64) (RideDetailModel, error) {
+	var (
+		rideTable RideDetailTabel
+		rideModel RideDetailModel
+		err       error
+	)
+
+	//convert into slice
+	err = statement.GetRideDetailsByCustomerIDAndStatus.Get(&rideTable, id, status)
+	if err != nil && sql.ErrNoRows == nil {
+		log.Println("[GetRideDetailsByCustomerIdAndStatus][Error] Err in fetching data from db", err)
+		return rideModel, err
+	}
+
+	return rideTable.GetModel(), err
+}

@@ -14,4 +14,5 @@ func InitFF(cfg *core.Config) {
 	}
 
 	DriverBookedNotifiedMap = make(map[int64]chan bool)
+	RequestRideCancel = make(map[int64]chan bool)
 }
