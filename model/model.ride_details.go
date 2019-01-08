@@ -113,7 +113,7 @@ func (table RideDetailTabel) InsertRideDetails(ctx context.Context) (int64, erro
 
 	var err error
 
-	res, err := statement.InsertRideDetails.ExecContext(ctx, table.CustomerId, table.SourceLat, table.SourceLong, table.DestinationLat, table.DestinationLong, table.Status, table.PaymentMethod.String)
+	res, err := statement.InsertRideDetails.Exec(table.CustomerId, table.SourceLat, table.SourceLong, table.DestinationLat, table.DestinationLong, table.Status, table.PaymentMethod.String)
 	if err != nil {
 		log.Println("[InsertRideDetails][Error] Err in inserting", err)
 		return 0, err
@@ -141,7 +141,7 @@ func (table RideDetailTabel) UpdateRideDetails(ctx context.Context) (int64, erro
 		rowCount int64
 	)
 
-	row, err := statement.UpdateRideDetails.ExecContext(ctx, table.Status,
+	row, err := statement.UpdateRideDetails.Exec(table.Status,
 		table.DriverCancelled.Int64, table.RiderCancelled.Int64,
 		table.RideFailedTime.String, table.Id)
 	if err != nil {
@@ -172,7 +172,7 @@ func (table RideDetailTabel) updateRideDetailsAndStatus(ctx context.Context) (in
 		rowCount int64
 	)
 
-	row, err := statement.UpdateRideDetailsWithStatus.ExecContext(ctx, table.DriverId, table.Status,
+	row, err := statement.UpdateRideDetailsWithStatus.Exec(table.DriverId, table.Status,
 		table.RideBookedTime.String, table.Id)
 	if err != nil {
 		log.Println("[UpdateRideDetails][Error] Err in inserting", err)
@@ -198,18 +198,10 @@ func (db *DBTuktuk) GetRideDetailsByRideId(ctx context.Context, id int64) (RideD
 	)
 
 	//convert into slice
-	row, err := statement.GetRideDetailsByRideId.QueryxContext(ctx, id)
-	if err != nil {
+	err = statement.GetRideDetailsByRideId.Get(&rideTable, id)
+	if err != nil && sql.ErrNoRows == nil {
 		log.Println("[GetRideDetailsByRideId][Error] Err in fetching data from db", err)
 		return rideModel, err
-	}
-
-	for row.Next() {
-		err := row.StructScan(&rideTable)
-		if err != nil {
-			log.Println("[GetRideDetailsByRideId][Error] Err in scanning row", err)
-			return rideModel, err
-		}
 	}
 
 	return rideTable.GetModel(), err
@@ -223,18 +215,10 @@ func (db *DBTuktuk) GetRideDetailsByCustomerId(ctx context.Context, id int64) (R
 	)
 
 	//convert into slice
-	row, err := statement.GetRideDetailsByCustomerID.QueryxContext(ctx, id)
-	if err != nil {
+	err = statement.GetRideDetailsByCustomerID.Get(&rideTable, id)
+	if err != nil && sql.ErrNoRows == nil {
 		log.Println("[GetRideDetailsByCustomerId][Error] Err in fetching data from db", err)
 		return rideModel, err
-	}
-
-	for row.Next() {
-		err := row.StructScan(&rideTable)
-		if err != nil {
-			log.Println("[GetRideDetailsByCustomerId][Error] Err in scanning row", err)
-			return rideModel, err
-		}
 	}
 
 	return rideTable.GetModel(), err
@@ -248,18 +232,10 @@ func (db *DBTuktuk) GetRideDetailsByDriverId(ctx context.Context, driverId int64
 	)
 
 	//convert into slice
-	row, err := statement.GetRideDetailsByDriverID.QueryxContext(ctx, driverId)
-	if err != nil {
+	err = statement.GetRideDetailsByDriverID.Get(&rideTable, driverId)
+	if err != nil && sql.ErrNoRows == nil {
 		log.Println("[GetRideDetailsByDriverId][Error] Err in fetching data from db", err)
 		return rideModel, err
-	}
-
-	for row.Next() {
-		err := row.StructScan(&rideTable)
-		if err != nil {
-			log.Println("[GetRideDetailsByDriverId][Error] Err in scanning row", err)
-			return rideModel, err
-		}
 	}
 
 	return rideTable.GetModel(), err
@@ -275,7 +251,7 @@ func (table RideDetailTabel) updateRideDetailsFailedStatus(ctx context.Context) 
 
 	var err error
 
-	_, err = statement.UpdateRideStatusFailed.ExecContext(ctx, table.Status,
+	_, err = statement.UpdateRideStatusFailed.Exec(table.Status,
 		table.RideFailedTime.String, table.Id)
 	if err != nil {
 		log.Println("[UpdateRideDetails][Error] Err in inserting", err)
@@ -297,7 +273,7 @@ func (table RideDetailTabel) updateRideDetailsStart(ctx context.Context) (int64,
 		rowCount int64
 	)
 
-	row, err := statement.UpdateRideStart.ExecContext(ctx, table.Status,
+	row, err := statement.UpdateRideStart.Exec(table.Status,
 		table.RideStartTime.String, table.Id)
 	if err != nil {
 		log.Println("[UpdateRideDetailsStart][Error] Err in inserting", err)
@@ -327,7 +303,7 @@ func (table RideDetailTabel) updateRideDetailsStatus(ctx context.Context) (int64
 		rowCount int64
 	)
 
-	row, err := statement.UpdateRideStatus.ExecContext(ctx, table.DriverId, table.Status, table.Id)
+	row, err := statement.UpdateRideStatus.Exec(table.DriverId, table.Status, table.Id)
 	if err != nil {
 		log.Println("[UpdateRideDetailsStatus][Error] Err in inserting", err)
 		return rowCount, err
@@ -356,7 +332,7 @@ func (table RideDetailTabel) updateRideDetailsComplete(ctx context.Context) (int
 		rowCount int64
 	)
 
-	row, err := statement.UpdateRideComplete.ExecContext(ctx, table.Status, table.RideCompletedTime.String, table.DestinationLat, table.DestinationLong, table.Id)
+	row, err := statement.UpdateRideComplete.Exec(table.Status, table.RideCompletedTime.String, table.DestinationLat, table.DestinationLong, table.Id)
 	if err != nil {
 		log.Println("[updateRideDetailsComplete][Error] Err in inserting", err)
 		return rowCount, err
@@ -388,20 +364,10 @@ func (db *DBTuktuk) GetRideDetailStatusByCustomerId(ctx context.Context, id int6
 	}
 
 	query = db.DBConnection.Rebind(query)
-	row, err := db.DBConnection.QueryxContext(ctx, query, args...)
+	err = db.DBConnection.Select(&rideTable, query, args...)
 	if err != nil {
 		log.Println("[GetRideDetailStatusByCustomerId][Error] Err in fetching data from db", err)
 		return rideModel, err
-	}
-
-	for row.Next() {
-		var rt RideDetailTabel
-		err := row.StructScan(&rt)
-		if err != nil {
-			log.Println("[GetRideDetailStatusByCustomerId][Error] Err in scanning row", err)
-			return rideModel, err
-		}
-		rideTable = append(rideTable, rt)
 	}
 
 	for _, table := range rideTable {
@@ -427,20 +393,10 @@ func (db *DBTuktuk) GetRideDetailStatusByDriverId(ctx context.Context, id int64,
 	}
 
 	query = db.DBConnection.Rebind(query)
-	row, err := db.DBConnection.QueryxContext(ctx, query, args...)
+	err = db.DBConnection.Select(&rideTable, query, args...)
 	if err != nil {
 		log.Println("[GetRideDetailStatusByDriverId][Error] Err in fetching data from db", err)
 		return rideModel, err
-	}
-
-	for row.Next() {
-		var rt RideDetailTabel
-		err := row.StructScan(&rt)
-		if err != nil {
-			log.Println("[GetRideDetailStatusByDriverId][Error] Err in scanning row", err)
-			return rideModel, err
-		}
-		rideTable = append(rideTable, rt)
 	}
 
 	for _, table := range rideTable {
