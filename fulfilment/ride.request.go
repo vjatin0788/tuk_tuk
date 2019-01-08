@@ -82,6 +82,10 @@ func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, 
 	log.Println("RIDE CREATED, RIDE ID#:", rideId)
 	ride.Id = rideId
 
+	rideCancelChan := make(chan bool)
+	RequestRideCancel[ride.Id] = rideCancelChan
+	log.Printf("[sendPushNotification] RequestRideCancelMap map:%+v", RequestRideCancel)
+
 	resp, finderr := ff.findDriver(ctx, &ride, vehicleType)
 	if finderr != nil {
 		//any error beyond this mark ride as fail in db
@@ -356,6 +360,13 @@ driverLoop:
 			break
 		}
 
+		if ff.checkForRideRequestCancellation(ctx, ride.Id) {
+			log.Println("[sendPushNotification] Cancel signal recieved ride Id:", ride.Id)
+			go ff.sendNotificationIfRideRequestCancelled(ctx, drivers[:idx+1], ride)
+
+			break
+		}
+
 		if !ff.checkIfDriverLocValid(ctx, ride, driver) {
 			log.Printf("[sendPushNotification] Driver location not valid to send push notification, skipping id: %d", driver.Id)
 			continue
@@ -368,6 +379,13 @@ driverLoop:
 		select {
 		case <-riderChan:
 			log.Printf("Booking recieved for id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
+
+			if ff.checkForRideRequestCancellation(ctx, ride.Id) {
+				log.Println("[sendPushNotification] Cancel signal recieved ride Id:", ride.Id)
+				go ff.sendNotificationIfRideRequestCancelled(ctx, drivers[:idx+1], ride)
+
+				break
+			}
 
 			rideUpdated, err = model.TukTuk.GetRideDetailsByRideId(ctx, ride.Id)
 			if err != nil {
@@ -390,6 +408,11 @@ driverLoop:
 				log.Printf("RIDE BOOKED  for ride id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
 			}
 			break driverLoop
+		case <-RequestRideCancel[ride.Id]:
+			log.Println("[sendPushNotification] Cancel signal recieved ride Id:", ride.Id)
+			go ff.sendNotificationIfRideRequestCancelled(ctx, drivers[:idx+1], ride)
+
+			break
 		case <-time.After(20 * time.Second):
 			log.Printf("No Driver booked yet for id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
 			break
@@ -502,4 +525,48 @@ func (ff *FFClient) sendInvalidDriverNotification(ctx context.Context, driverId 
 	log.Printf("[sendNotification]Push notification:%+v", data)
 
 	go fbclient.SendPushNotification(ctx, data, ddata.DeviceId)
+}
+
+func (ff *FFClient) checkForRideRequestCancellation(ctx context.Context, rideId int64) bool {
+	var isCancelled bool
+
+	log.Printf("[checkForRideRequestCancellation] RequestRideCancel map:%+v", RequestRideCancel)
+	if val, ok := RequestRideCancel[rideId]; ok {
+		select {
+		case <-val:
+			isCancelled = true
+		default:
+			log.Println("[checkForRideRequestCancellation] No cancelation recieved")
+		}
+	} else {
+		//Register in NSQ
+		log.Println("[checkForRideRequestCancellation][Error] Error in getting value from map.")
+	}
+
+	log.Println("[checkForRideRequestCancellation] Cancellation value:", isCancelled)
+
+	return isCancelled
+}
+
+func (ff *FFClient) sendNotificationIfRideRequestCancelled(ctx context.Context, drivers []DriverData, ride *model.RideDetailModel) {
+	fbclient := firebase.FClient
+
+	for _, driver := range drivers {
+		ddata, err := model.TukTuk.GetDriverUserById(ctx, driver.Id)
+		if err != nil {
+			log.Println("[sendNotificationIfRideRequestCancelled][Error] DB error", err)
+		}
+
+		data := PushNotification{
+			Type: "ride_cancel",
+			Data: PushNotificationInvalidRide{
+				RideId:  ride.Id,
+				Message: "RIDE CANCELLED",
+			},
+		}
+
+		log.Printf("[sendNotificationIfRideRequestCancelled]Push notification:%+v", data)
+
+		fbclient.SendPushNotification(ctx, data, ddata.DeviceId)
+	}
 }
