@@ -64,7 +64,7 @@ func (table TrackingTable) InsertTrackingData(ctx context.Context) (int64, error
 		defaultId int64
 	)
 
-	res, err := statement.InsertTrackingData.ExecContext(ctx, table.EmailId.String, table.Latitude.Float64, table.Longitutde.Float64, table.Date.String, table.TrackingType.String, table.UserId.Int64)
+	res, err := statement.InsertTrackingData.Exec(table.EmailId.String, table.Latitude.Float64, table.Longitutde.Float64, table.Date.String, table.TrackingType.String, table.UserId.Int64)
 	if err != nil {
 		log.Println("[InsertTrackingData][Error] Err in inserting", err)
 		return defaultId, err

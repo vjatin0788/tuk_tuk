@@ -181,39 +181,31 @@ func (model DriverUserModel) GetTable() DriverUserTable {
 func (db *DBTuktuk) GetDriverByToken(ctx context.Context, authToken string) (DriverUserModel, error) {
 	var (
 		driverModel DriverUserModel
-		driverTable []DriverUserTable
+		driverTable DriverUserTable
 		err         error
 	)
 
-	err = statement.GetDriverUserByAuth.SelectContext(ctx, &driverTable, authToken)
-	if err != nil {
+	err = statement.GetDriverUserByAuth.Get(&driverTable, authToken)
+	if err != nil && sql.ErrNoRows == nil {
 		log.Println("[GetDriverByToken][Error] Err in fetching data from db", err)
 		return driverModel, err
 	}
 
-	for _, driver := range driverTable {
-		driverModel = driver.GetModel()
-	}
-
-	return driverModel, nil
+	return driverTable.GetModel(), nil
 }
 
 func (db *DBTuktuk) GetDriverUserById(ctx context.Context, id int64) (DriverUserModel, error) {
 	var (
 		driverModel DriverUserModel
-		driverTable []DriverUserTable
+		driverTable DriverUserTable
 		err         error
 	)
 
-	err = statement.GetDriverUserById.SelectContext(ctx, &driverTable, id)
-	if err != nil {
+	err = statement.GetDriverUserById.Get(&driverTable, id)
+	if err != nil && sql.ErrNoRows == nil {
 		log.Println("[GetDriverUserById][Error] Err in fetching data from db", err)
 		return driverModel, err
 	}
 
-	for _, driver := range driverTable {
-		driverModel = driver.GetModel()
-	}
-
-	return driverModel, nil
+	return driverTable.GetModel(), nil
 }

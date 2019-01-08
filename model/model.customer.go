@@ -117,39 +117,31 @@ func (model CustomerModel) GetTable() CustomerTable {
 func (db *DBTuktuk) GetCustomerByToken(ctx context.Context, authToken string) (CustomerModel, error) {
 	var (
 		custModel CustomerModel
-		custTable []CustomerTable
+		custTable CustomerTable
 		err       error
 	)
 
-	err = statement.GetCustomerByAuth.SelectContext(ctx, &custTable, authToken)
-	if err != nil {
+	err = statement.GetCustomerByAuth.Get(&custTable, authToken)
+	if err != nil && sql.ErrNoRows == nil {
 		log.Println("[GetCustomerByToken][Error] Err in fetching data from db", err)
 		return custModel, err
 	}
 
-	for _, cust := range custTable {
-		custModel = cust.GetModel()
-	}
-
-	return custModel, nil
+	return custTable.GetModel(), nil
 }
 
 func (db *DBTuktuk) GetCustomerById(ctx context.Context, id int64) (CustomerModel, error) {
 	var (
 		custModel CustomerModel
-		custTable []CustomerTable
+		custTable CustomerTable
 		err       error
 	)
 
-	err = statement.GetCustomerById.SelectContext(ctx, &custTable, id)
-	if err != nil {
+	err = statement.GetCustomerById.Get(&custTable, id)
+	if err != nil && sql.ErrNoRows == nil {
 		log.Println("[GetCustomerById][Error] Err in fetching data from db", err)
 		return custModel, err
 	}
 
-	for _, cust := range custTable {
-		custModel = cust.GetModel()
-	}
-
-	return custModel, nil
+	return custTable.GetModel(), nil
 }
