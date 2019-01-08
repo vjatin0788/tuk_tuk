@@ -124,7 +124,7 @@ func (table InvoiceTable) InsertInvoiceByCustomerID(ctx context.Context) error {
 
 	var err error
 
-	_, err = statement.InsertInvoiceByCustomerId.ExecContext(ctx, table.CustomerId.Int64, table.DriverId.Int64,
+	_, err = statement.InsertInvoiceByCustomerId.Exec(table.CustomerId.Int64, table.DriverId.Int64,
 		table.SourceLat.Float64, table.SourceLng.Float64, table.SourceAddress.String, table.DestinationLat.Float64,
 		table.DestinationLng.Float64, table.SourceTime.String, table.TotalMinutes.Int64, table.CostPerMinute.Float64,
 		table.TimeCost.Float64, table.Distance.Float64, table.CostPerKm.Float64, table.DistanceCost.Float64, table.BaseFare.Float64,
@@ -145,8 +145,8 @@ func (db *DBTuktuk) GetInvoiceByCustomerId(ctx context.Context, custId int64) (I
 		err          error
 	)
 
-	err = statement.GetInvoiceByCustomerId.SelectContext(ctx, &invoiceTabel, custId)
-	if err != nil {
+	err = statement.GetInvoiceByCustomerId.Get(&invoiceTabel, custId)
+	if err != nil && sql.ErrNoRows == nil {
 		log.Println("[GetAvailableDriver][Error] Err in fetching data from db", err)
 		return invoiceModel, err
 	}

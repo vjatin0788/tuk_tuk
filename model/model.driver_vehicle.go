@@ -107,20 +107,10 @@ func (db *DBTuktuk) GetVehicleByAssignedDriver(ctx context.Context, driverIds []
 	}
 
 	query = db.DBConnection.Rebind(query)
-	row, err := db.DBConnection.QueryxContext(ctx, query, args...)
+	err = db.DBConnection.Select(&table, query, args...)
 	if err != nil {
 		log.Println("[GetVehicleByAssignedDriver][Error] Err in fetching data from db", err)
 		return model, err
-	}
-
-	for row.Next() {
-		var tempTable VehicleTable
-		err := row.StructScan(&tempTable)
-		if err != nil {
-			log.Println("[GetVehicleByAssignedDriver][Error] Err in scanning row", err)
-			return model, err
-		}
-		table = append(table, tempTable)
 	}
 
 	for _, t1 := range table {

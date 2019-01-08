@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"time"
@@ -89,7 +90,7 @@ func (db *DBTuktuk) GetAvailableDriver(ctx context.Context, userLat, userLong fl
 
 	db.PrepareQueryForAvailableDriver(ctx, userLat, userLong, distance, radius)
 
-	err = statement.GetAvailableDrivers.SelectContext(ctx, &driverTable)
+	err = statement.GetAvailableDrivers.Select(&driverTable)
 	if err != nil {
 		log.Println("[GetAvailableDriver][Error] Err in fetching data from db", err)
 		return driverModel, err
@@ -112,7 +113,7 @@ func (table DriverTrackingTable) InsertDriver(ctx context.Context) error {
 
 	var err error
 
-	_, err = statement.InsertDriverData.ExecContext(ctx, table.DriverID, table.CurrentLatitude, table.CurrentLongitude, table.CurrentLatitudeRadian, table.CurrentLongitudeRadian)
+	_, err = statement.InsertDriverData.Exec(table.DriverID, table.CurrentLatitude, table.CurrentLongitude, table.CurrentLatitudeRadian, table.CurrentLongitudeRadian)
 	if err != nil {
 		log.Println("[InsertDriver][Error] Err in inserting", err)
 		return err
@@ -131,7 +132,7 @@ func (table DriverTrackingTable) UpdateDriver(ctx context.Context) error {
 
 	var err error
 
-	_, err = statement.UpdateDriverData.ExecContext(ctx, table.CurrentLatitude, table.CurrentLongitude, table.CurrentLatitudeRadian, table.CurrentLongitudeRadian, table.LastLatitude, table.LastLongitude, table.LastLatitudeRadian, table.LastLongitudeRadian, table.DriverID)
+	_, err = statement.UpdateDriverData.Exec(table.CurrentLatitude, table.CurrentLongitude, table.CurrentLatitudeRadian, table.CurrentLongitudeRadian, table.LastLatitude, table.LastLongitude, table.LastLatitudeRadian, table.LastLongitudeRadian, table.DriverID)
 	if err != nil {
 		log.Println("[UpdateDriver][Error] Err in inserting", err)
 		return err
@@ -148,18 +149,10 @@ func (db *DBTuktuk) GetDriverById(ctx context.Context, driverId int64) (DriverTr
 	)
 
 	//convert into slice
-	row, err := statement.GetDriverById.QueryxContext(ctx, driverId)
-	if err != nil {
+	err = statement.GetDriverById.Get(&driverTable, driverId)
+	if err != nil && sql.ErrNoRows == nil {
 		log.Println("[GetDriverById][Error] Err in fetching data from db", err)
 		return driverModel, err
-	}
-
-	for row.Next() {
-		err := row.StructScan(&driverTable)
-		if err != nil {
-			log.Println("[GetDriverById][Error] Err in scanning row", err)
-			return driverModel, err
-		}
 	}
 
 	return driverTable.GetModel(), err
