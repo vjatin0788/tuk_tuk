@@ -15,23 +15,55 @@ func (ff *FFClient) CustomerRideCancel(ctx context.Context, userId int64, rideRe
 	var (
 		defaultResp *RideCancelResponse
 		err         error
+		rideDetail  model.RideDetailModel
 	)
 
-	if rideReq.RideId == 0 {
-		log.Println("[CustomerRideCancel][Error] Error Ride Id is 0.")
-		return defaultResp, errors.New("Ride Id is 0")
+	defaultResp = &RideCancelResponse{}
+
+	if !rideReq.RideRequestCancel {
+		if rideReq.RideId == 0 {
+			log.Println("[CustomerRideCancel][Error] Error Ride Id is 0.")
+			return defaultResp, errors.New("Ride Id is 0")
+		}
+
+		rideDetail, err = model.TukTuk.GetRideDetailsByRideId(ctx, rideReq.RideId)
+		if err != nil {
+			log.Println("[CustomerRideCancel][Error] Error in fetching ride data", err)
+			return defaultResp, err
+		}
+
+		//it's check in case there is no ride of requested ride id.
+		if rideReq.RideId != rideDetail.Id {
+			log.Println("[CustomerRideCancel][Error] Invalid Ride id", rideDetail)
+			return defaultResp, errors.New("Invalid Ride ID.")
+		}
+
+	} else {
+		rideDetail, err = model.TukTuk.GetRideDetailsByCustomerIdAndStatus(ctx, userId, common.RideStatus.REQUESTED.ID)
+		if err != nil {
+			log.Println("[CustomerRideCancel][Error] Error in fetching ride data", err)
+			return defaultResp, err
+		}
+
+		if userId != rideDetail.CustomerId {
+			log.Println("[CustomerRideCancel][Error] Invalid Customer id", rideDetail)
+			return defaultResp, errors.New("Invalid Customer ID.")
+		}
+
 	}
 
-	rideDetail, err := model.TukTuk.GetRideDetailsByRideId(ctx, rideReq.RideId)
-	if err != nil {
-		log.Println("[CustomerRideCancel][Error] Error in fetching ride data", err)
+	//notify if ride is in requested state.
+	if rideDetail.Status <= common.RideStatus.REQUESTED.ID {
+		log.Printf("NOTIFYING RIDER. Request ride cancel map:%+v", RequestRideCancel)
+		if val, ok := RequestRideCancel[rideDetail.Id]; ok {
+			val <- common.NOTIFY_RIDER
+		} else {
+			//Register in NSQ
+			log.Println("[CustomerRideCancel][Error] Error in getting value from map.Unable to notify.")
+			return nil, errors.New("Unable to notify.")
+		}
+		defaultResp.Success = true
 		return defaultResp, err
-	}
-
-	//it's check in case there is no ride of requested ride id.
-	if rideReq.RideId != rideDetail.Id {
-		log.Println("[CustomerRideCancel][Error] Invalid Ride id", rideDetail)
-		return defaultResp, errors.New("Invalid Ride ID.")
 	}
 
 	log.Printf("[CustomerRideCancel] Ride:%+v ", rideDetail)

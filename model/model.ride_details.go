@@ -204,7 +204,7 @@ func (db *DBTuktuk) GetRideDetailsByRideId(ctx context.Context, id int64) (RideD
 		return rideModel, err
 	}
 
-	return rideTable.GetModel(), err
+	return rideTable.GetModel(), nil
 }
 
 func (db *DBTuktuk) GetRideDetailsByCustomerId(ctx context.Context, id int64) (RideDetailModel, error) {
@@ -221,7 +221,7 @@ func (db *DBTuktuk) GetRideDetailsByCustomerId(ctx context.Context, id int64) (R
 		return rideModel, err
 	}
 
-	return rideTable.GetModel(), err
+	return rideTable.GetModel(), nil
 }
 
 func (db *DBTuktuk) GetRideDetailsByDriverId(ctx context.Context, driverId int64) (RideDetailModel, error) {
@@ -238,7 +238,7 @@ func (db *DBTuktuk) GetRideDetailsByDriverId(ctx context.Context, driverId int64
 		return rideModel, err
 	}
 
-	return rideTable.GetModel(), err
+	return rideTable.GetModel(), nil
 }
 
 func (db *DBTuktuk) UpdateRideFail(ctx context.Context, rideModel RideDetailModel) error {
@@ -404,4 +404,21 @@ func (db *DBTuktuk) GetRideDetailStatusByDriverId(ctx context.Context, id int64,
 	}
 
 	return rideModel, err
+}
+
+func (db *DBTuktuk) GetRideDetailsByCustomerIdAndStatus(ctx context.Context, id, status int64) (RideDetailModel, error) {
+	var (
+		rideTable RideDetailTabel
+		rideModel RideDetailModel
+		err       error
+	)
+
+	//convert into slice
+	err = statement.GetRideDetailsByCustomerIDAndStatus.Get(&rideTable, id, status)
+	if err != nil && sql.ErrNoRows == nil {
+		log.Println("[GetRideDetailsByCustomerIdAndStatus][Error] Err in fetching data from db", err)
+		return rideModel, err
+	}
+
+	return rideTable.GetModel(), nil
 }
