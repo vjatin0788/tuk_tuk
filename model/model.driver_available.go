@@ -155,5 +155,5 @@ func (db *DBTuktuk) GetDriverById(ctx context.Context, driverId int64) (DriverTr
 		return driverModel, err
 	}
 
-	return driverTable.GetModel(), err
+	return driverTable.GetModel(), nil
 }

@@ -262,7 +262,7 @@ func (ff *FFClient) getDriversData(ctx context.Context, distances maps.DistanceM
 
 			log.Printf("[getDriversData] Driver status:%s, id:%d, driverModel:%+v", ddata.Status, ddata.Userid, driverModel[idx])
 
-			if strings.EqualFold(ddata.Status, common.STATUS_ACTIVATE) {
+			if strings.EqualFold(ddata.Status, common.STATUS_ACTIVATE) && strings.EqualFold(ddata.Driverdutystatus, common.DRIVER_DUTY_STATUS) {
 				drivers = append(drivers, DriverData{
 					Id:       ddata.Userid,
 					Distance: element.Distance.Value,
