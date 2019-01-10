@@ -2,9 +2,9 @@ package authentication
 
 import (
 	"context"
-	"errors"
 	"log"
 
+	"github.com/TukTuk/errs"
 	"github.com/TukTuk/model"
 )
 
@@ -18,7 +18,7 @@ func (auth *TukTukAuth) Authentication(ctx context.Context, user, driver bool, a
 
 	if authToken == "" {
 		log.Println("[Authentication][Error] Empty Auth Token ", authToken)
-		return defaultAuth, errors.New("Empty Auth Token ")
+		return defaultAuth, errs.Err("TT_AU_401")
 	}
 
 	if user {
@@ -29,7 +29,7 @@ func (auth *TukTukAuth) Authentication(ctx context.Context, user, driver bool, a
 
 		if cust.Token != authToken {
 			log.Println("[Authentication][Error] Token mismatch ", cust.Token)
-			return defaultAuth, errors.New("Token mismatch ")
+			return defaultAuth, errs.Err("TT_AU_400")
 		}
 	}
 
@@ -41,7 +41,7 @@ func (auth *TukTukAuth) Authentication(ctx context.Context, user, driver bool, a
 
 		if duser.Token != authToken {
 			log.Println("[Authentication][Error]driver Token mismatch ", cust.Token)
-			return defaultAuth, errors.New("Token mismatch ")
+			return defaultAuth, errs.Err("TT_AU_400")
 		}
 	}
 

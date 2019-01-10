@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/TukTuk/errs"
+
 	"github.com/TukTuk/authentication"
 	"github.com/TukTuk/fulfilment"
 )
@@ -51,7 +53,8 @@ func (api *APIMod) DriverWebhook(rw http.ResponseWriter, r *http.Request) (inter
 	authToken := r.Header.Get("TUKTUK_TOKEN")
 	if authToken == "" {
 		log.Println("[DriverAvailableHandler][Error] empty token")
-		return nil, errors.New("Empty Auth Token")
+		return nil, errs.Err("TT_AU_401")
+
 	}
 
 	duser, err := authentication.Auth.Authentication(ctx, false, true, authToken)
