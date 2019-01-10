@@ -4,6 +4,7 @@ type DistanceMatrix struct {
 	DestinationAddress []string       `json:"destination_addresses"`
 	OriginAddress      []string       `json:"origin_addresses"`
 	Rows               []DistanceRows `json:"rows"`
+	ErrorMessage       string         `json:"error_message"`
 }
 
 type DistanceRows struct {

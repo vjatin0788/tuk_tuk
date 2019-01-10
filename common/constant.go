@@ -5,17 +5,18 @@ import (
 )
 
 const (
-	MASTER_DB_LOCAL  = "root:12345@/tuktuk?parseTime=true&loc=Local&allowNativePasswords=true"
-	MASTER_DB        = "tuktuk_user:tuktuk_123@tcp(122.160.30.50:3306)/tuktuk?parseTime=true&loc=Local&allowNativePasswords=true"
-	API_KEY          = ""
-	METHOD_GET       = "GET"
-	METHOD_POST      = "POST"
-	TIME_SLEEP       = 10 * time.Second
-	DRIVER_CANCELLED = 1
-	RIDER_CANCELLED  = 1
-	NOTIFY_RIDER     = true
-	STATUS_ACTIVATE  = "Activate"
-	CASH             = "cash"
+	MASTER_DB_LOCAL    = "root:12345@/tuktuk?parseTime=true&loc=Local&allowNativePasswords=true"
+	MASTER_DB          = "tuktuk_user:tuktuk_123@tcp(122.160.30.50:3306)/tuktuk?parseTime=true&loc=Local&allowNativePasswords=true"
+	API_KEY            = ""
+	METHOD_GET         = "GET"
+	METHOD_POST        = "POST"
+	TIME_SLEEP         = 10 * time.Second
+	DRIVER_CANCELLED   = 1
+	RIDER_CANCELLED    = 1
+	NOTIFY_RIDER       = true
+	STATUS_ACTIVATE    = "Activate"
+	DRIVER_DUTY_STATUS = "On"
+	CASH               = "cash"
 )
 
 //Endpoints

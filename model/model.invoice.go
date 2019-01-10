@@ -151,5 +151,5 @@ func (db *DBTuktuk) GetInvoiceByCustomerId(ctx context.Context, custId int64) (I
 		return invoiceModel, err
 	}
 
-	return invoiceTabel.GetModel(), err
+	return invoiceTabel.GetModel(), nil
 }
