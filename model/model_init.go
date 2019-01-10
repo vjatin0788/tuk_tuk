@@ -29,6 +29,7 @@ type PreparedStatement struct {
 	GetRideDetailStatusByCustomerID     *sqlx.Stmt
 	InsertTrackingData                  *sqlx.Stmt
 	GetRideDetailsByCustomerIDAndStatus *sqlx.Stmt
+	GetErrors                           *sqlx.Stmt
 }
 
 var (
@@ -60,6 +61,7 @@ var (
 	getRideDetailsStatusByCustomerID    = `SELECT * FROM tb_ride_details WHERE customer_id=? AND status IN (?) ORDER BY id`
 	getRideDetailsStatusByDriverID      = `SELECT * FROM tb_ride_details WHERE driver_id=? AND status IN (?) ORDER BY id`
 	insertTrackingData                  = `INSERT INTO tbtrackingdata(emailid,lat,lng,datetime,tracking_type,user_id) VALUES(?,?,?,?,?,?)`
+	getErrors                           = `SELECT id,status,error_code,message,created_at,updated_at FROM tberrors`
 )
 
 func InitModel(db *DBTuktuk) {
@@ -85,4 +87,5 @@ func InitModel(db *DBTuktuk) {
 	statement.GetRideDetailStatusByCustomerID, _ = db.DBConnection.Preparex(getRideDetailsStatusByCustomerID)
 	statement.InsertTrackingData, _ = db.DBConnection.Preparex(insertTrackingData)
 	statement.GetRideDetailsByCustomerIDAndStatus, _ = db.DBConnection.Preparex(getRideDetailsByCustomerIDAndStatus)
+	statement.GetErrors, _ = db.DBConnection.Preparex(getErrors)
 }
