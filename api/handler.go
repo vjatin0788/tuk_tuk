@@ -5,11 +5,13 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/TukTuk/errs"
+
 	"github.com/gorilla/mux"
 )
 
 type Base struct {
-	StatusCode   int64  `json:"statusCode"`
+	StatusCode   int    `json:"statusCode"`
 	ErrorMessage string `json:"message"`
 }
 
@@ -41,9 +43,17 @@ func (fn HandlerFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		response.ErrorMessage = err.Error()
-		response.StatusCode = 400
-		rw.WriteHeader(400)
+		switch t := err.(type) {
+		case errs.APIError:
+			response.ErrorMessage = t.Message
+			response.StatusCode = t.Statuscode
+			rw.WriteHeader(t.Statuscode)
+		default:
+			response.ErrorMessage = err.Error()
+			response.StatusCode = 400
+			rw.WriteHeader(400)
+		}
+
 	}
 
 	if buf, err = json.Marshal(response); err != nil {
