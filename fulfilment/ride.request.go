@@ -260,7 +260,7 @@ func (ff *FFClient) getDriversData(ctx context.Context, distances maps.DistanceM
 				return drivers, err
 			}
 
-			log.Printf("[getDriversData] Driver status:%s, id:%d, driverModel:%+v", ddata.Status, ddata.Userid, driverModel[idx])
+			log.Printf("[getDriversData] Driver status:%s, id:%d, dutyStatus:%s,driverModel:%+v", ddata.Status, ddata.Userid, ddata.Driverdutystatus, driverModel[idx])
 
 			if strings.EqualFold(ddata.Status, common.STATUS_ACTIVATE) && strings.EqualFold(ddata.Driverdutystatus, common.DRIVER_DUTY_STATUS) {
 				drivers = append(drivers, DriverData{
@@ -367,22 +367,14 @@ func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverDa
 	DriverBookedNotifiedMap[ride.Id] = riderChan
 	log.Printf("[sendPushNotification] DriverBookedNotifiedMap map:%+v", DriverBookedNotifiedMap)
 
-	//configure time for sending notification. It should not be more than 90 seconds.
-	startTime := time.Now()
-
-driverLoop:
-	for idx, driver := range drivers {
-
-		if ff.Cfg.Server.RideRequestTime < time.Since(startTime) {
-			log.Printf("[sendPushNotification] Request Time out.", time.Since(startTime).Seconds)
-			break
-		}
+	//sending notifications to all drivers
+	var driverCount = make(map[int64]DriverData)
+	for _, driver := range drivers {
 
 		if ff.checkForRideRequestCancellation(ctx, ride.Id) {
 			log.Println("[sendPushNotification] Cancel signal recieved ride Id:", ride.Id)
-			go ff.sendNotificationIfRideRequestCancelled(ctx, drivers[:idx+1], ride)
-
-			break
+			go ff.sendNotificationIfRideRequestCancelled(ctx, driverCount, ride)
+			return res, err
 		}
 
 		if !ff.checkIfDriverLocValid(ctx, ride, driver) {
@@ -390,19 +382,27 @@ driverLoop:
 			continue
 		}
 
-		log.Printf("Sending Push notification to driver id:%d", driver.Id)
 		//Sending push notification.
+		log.Printf("Sending Push notification to driver id:%d", driver.Id)
 		go ff.sendNotification(ctx, ride, driver)
 
+		driverCount[driver.Id] = driver
+	}
+
+	//wait for 30 seconds for driver booking or cancellation.
+	//configure time for sending notification. It should not be more than 90 seconds.
+	startTime := time.Now()
+
+rideLoop:
+	for ff.Cfg.Server.RideRequestTime > time.Duration(time.Since(startTime).Nanoseconds()) {
 		select {
 		case <-riderChan:
 			log.Printf("Booking recieved for id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
 
 			if ff.checkForRideRequestCancellation(ctx, ride.Id) {
 				log.Println("[sendPushNotification] Cancel signal recieved ride Id:", ride.Id)
-				go ff.sendNotificationIfRideRequestCancelled(ctx, drivers[:idx+1], ride)
-
-				break
+				go ff.sendNotificationIfRideRequestCancelled(ctx, driverCount, ride)
+				break rideLoop
 			}
 
 			rideUpdated, err = model.TukTuk.GetRideDetailsByRideId(ctx, ride.Id)
@@ -415,25 +415,27 @@ driverLoop:
 
 			if rideUpdated.Status == common.RideStatus.BOOKED.ID {
 
-				if !ff.checkIfDriverBookedIsValid(ctx, &rideUpdated, drivers[:idx+1]) {
-					log.Printf("Driver booked for ride id:%d , driver id:%d , is not valid does not lies in range. %+v", ride.Id, rideUpdated.DriverId, drivers[:idx+1])
+				if !ff.checkIfDriverBookedIsValid(ctx, &rideUpdated, drivers) {
+					log.Printf("Driver booked for ride id:%d , driver id:%d , is not valid does not lies in range. %+v", ride.Id, rideUpdated.DriverId, drivers)
 
 					log.Printf("Sending Push notification to wrong driver and cancel it's ride. id:%d", updatedDriverId)
 					ff.sendInvalidDriverNotification(ctx, updatedDriverId, &rideUpdated)
-
 					break
 				}
 				log.Printf("RIDE BOOKED  for ride id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
 			}
-			break driverLoop
+			break rideLoop
 		case <-RequestRideCancel[ride.Id]:
 			log.Println("[sendPushNotification] Cancel signal recieved ride Id:", ride.Id)
-			go ff.sendNotificationIfRideRequestCancelled(ctx, drivers[:idx+1], ride)
+			go ff.sendNotificationIfRideRequestCancelled(ctx, driverCount, ride)
 
-			break
-		case <-time.After(20 * time.Second):
+			break rideLoop
+		case <-time.After(10 * time.Second):
 			log.Printf("No Driver booked yet for id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
 			break
+		case <-time.After(ff.Cfg.Server.RideRequestTime - time.Duration(time.Since(startTime).Nanoseconds())):
+			log.Printf("Request Time out for ride id:%d, time served:%v", ride.Id, time.Duration(time.Since(startTime).Nanoseconds()))
+			break rideLoop
 		}
 	}
 
@@ -566,11 +568,11 @@ func (ff *FFClient) checkForRideRequestCancellation(ctx context.Context, rideId 
 	return isCancelled
 }
 
-func (ff *FFClient) sendNotificationIfRideRequestCancelled(ctx context.Context, drivers []DriverData, ride *model.RideDetailModel) {
+func (ff *FFClient) sendNotificationIfRideRequestCancelled(ctx context.Context, drivers map[int64]DriverData, ride *model.RideDetailModel) {
 	fbclient := firebase.FClient
 
-	for _, driver := range drivers {
-		ddata, err := model.TukTuk.GetDriverUserById(ctx, driver.Id)
+	for key := range drivers {
+		ddata, err := model.TukTuk.GetDriverUserById(ctx, key)
 		if err != nil {
 			log.Println("[sendNotificationIfRideRequestCancelled][Error] DB error", err)
 		}
