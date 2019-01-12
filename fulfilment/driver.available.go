@@ -10,7 +10,7 @@ import (
 	"github.com/TukTuk/model"
 )
 
-const DISTANCE float64 = 3
+const DISTANCE float64 = 10
 const RADIUS float64 = 6371.01
 
 func (ff *FFClient) DriverAvailable(ctx context.Context, userLat, userLong float64, vehicleType string) (interface{}, error) {

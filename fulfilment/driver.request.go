@@ -166,7 +166,7 @@ func (ff *FFClient) alotDriverForRide(ctx context.Context, userId int64, ride *m
 	ride.RideBookedTime = time.Now().UTC().String()
 	log.Printf("[validateAndUpdateRideStatus][Error] Updated Ride:%+v", ride)
 
-	rowAffectedCount, err := model.TukTuk.UpdateRideWithStatus(ctx, *ride, common.RideStatus.REQUESTED.ID)
+	rowAffectedCount, err := model.TukTuk.UpdateRideWithStatus(ctx, *ride)
 	if err != nil {
 		log.Println("[validateAndUpdateRideStatus][Error] Err in updating db", err)
 		return nil, err

@@ -49,7 +49,7 @@ var (
 	getInvoiceByCustomerId              = `SELECT * FROM tbinvoice WHERE customer_id=? ORDER BY invoice_id DESC LIMIT `
 	insertRideDetails                   = `INSERT INTO tb_ride_details(customer_id,source_lat,source_long,destination_lat,destination_long,status,payment_method) VALUES(?,?,?,?,?,?,?)`
 	updateRideDetailsByRideId           = `UPDATE tb_ride_details SET status=?,driver_cancelled=?,rider_cancelled=?,ride_failed_time=? WHERE status<=2 AND id=?`
-	updateRideDetailsByRideIdAndStatus  = `UPDATE tb_ride_details SET driver_id=?,status=?,ride_booked_time=? WHERE id=? and status=?`
+	updateRideDetailsByRideIdAndStatus  = `UPDATE tb_ride_details SET driver_id=?,status=?,ride_booked_time=? WHERE id=? and status=1`
 	updateRideStatusStartByRideId       = `UPDATE tb_ride_details SET status=?,ride_start_time=? WHERE id=?`
 	updateRideStatusFailedByRideId      = `UPDATE tb_ride_details SET status=?,ride_failed_time=? WHERE id=?`
 	updateRideStatusById                = `UPDATE tb_ride_details SET driver_id=?,status=? WHERE id=?`
