@@ -37,31 +37,50 @@ var (
 )
 
 var (
-	insertDriver                        = `INSERT INTO driver_tracking(driver_id,current_lat,current_long,current_lat_rad,current_long_rad) VALUES(?,?,?,?,?)`
-	updateDriver                        = `UPDATE driver_tracking SET current_lat=?,current_long=?,current_lat_rad=?,current_long_rad=?,last_lat=?,last_long=?,last_lat_rad=?,last_long_rad=? WHERE  driver_id = ?`
-	getDriverById                       = `SELECT id,driver_id,current_lat,current_long,current_lat_rad,current_long_rad FROM driver_tracking WHERE driver_id=?`
-	getVehicleByAssignedDriver          = `SELECT * FROM tbvehicle WHERE assigned_driver_id IN (?)`
-	getCustomerByAuth                   = `SELECT * FROM tbcustomers WHERE token=?`
-	getCustomerById                     = `SELECT * FROM tbcustomers WHERE customer_id=?`
-	getDriverByAuth                     = `SELECT * FROM tbusers WHERE FIND_IN_SET(?, token)`
-	getDriverUserById                   = `SELECT * FROM tbusers WHERE userid=?`
-	insertInvoiceByCustomerId           = `INSERT INTO tbinvoice(customer_id,driver_id,source_lat,source_lng,source_address,destination_lat,destination_lng,source_time,total_minutes,cost_per_minute,time_cost,distance,cost_per_km,distance_cost,base_fare,extra_charges,discount,total_cost,gst_percentage,gst,final_cost) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-	getInvoiceByCustomerId              = `SELECT * FROM tbinvoice WHERE customer_id=? ORDER BY invoice_id DESC LIMIT `
-	insertRideDetails                   = `INSERT INTO tb_ride_details(customer_id,source_lat,source_long,destination_lat,destination_long,status,payment_method) VALUES(?,?,?,?,?,?,?)`
-	updateRideDetailsByRideId           = `UPDATE tb_ride_details SET status=?,driver_cancelled=?,rider_cancelled=?,ride_failed_time=? WHERE status<=2 AND id=?`
-	updateRideDetailsByRideIdAndStatus  = `UPDATE tb_ride_details SET driver_id=?,status=?,ride_booked_time=? WHERE id=? and status=?`
-	updateRideStatusStartByRideId       = `UPDATE tb_ride_details SET status=?,ride_start_time=? WHERE id=?`
-	updateRideStatusFailedByRideId      = `UPDATE tb_ride_details SET status=?,ride_failed_time=? WHERE id=?`
-	updateRideStatusById                = `UPDATE tb_ride_details SET driver_id=?,status=? WHERE id=?`
-	updateRideCompleteById              = `UPDATE tb_ride_details SET status=?,ride_completed_time=?,destination_lat=?,destination_long=? WHERE id=?`
-	getRideDetailsByRideId              = `SELECT * FROM tb_ride_details WHERE id=?`
-	getRideDetailsByCustomerID          = `SELECT * FROM tb_ride_details WHERE customer_id=? ORDER BY id DESC LIMIT 1`
-	getRideDetailsByCustomerIDAndStatus = `SELECT * FROM tb_ride_details WHERE customer_id=? AND status=? ORDER BY id DESC LIMIT 1`
-	getRideDetailsByDriverID            = `SELECT * FROM tb_ride_details WHERE driver_id=? ORDER BY id DESC LIMIT 1`
-	getRideDetailsStatusByCustomerID    = `SELECT * FROM tb_ride_details WHERE customer_id=? AND status IN (?) ORDER BY id`
-	getRideDetailsStatusByDriverID      = `SELECT * FROM tb_ride_details WHERE driver_id=? AND status IN (?) ORDER BY id`
-	insertTrackingData                  = `INSERT INTO tbtrackingdata(emailid,lat,lng,datetime,tracking_type,user_id) VALUES(?,?,?,?,?,?)`
-	getErrors                           = `SELECT id,status,error_code,message,created_at,updated_at FROM tberrors`
+	insertDriver                       = `INSERT INTO driver_tracking(driver_id,current_lat,current_long,current_lat_rad,current_long_rad) VALUES(?,?,?,?,?)`
+	updateDriver                       = `UPDATE driver_tracking SET current_lat=?,current_long=?,current_lat_rad=?,current_long_rad=?,last_lat=?,last_long=?,last_lat_rad=?,last_long_rad=? WHERE  driver_id = ?`
+	getDriverById                      = `SELECT id,driver_id,current_lat,current_long,current_lat_rad,current_long_rad FROM driver_tracking WHERE driver_id=?`
+	getVehicleByAssignedDriver         = `SELECT * FROM tbvehicle WHERE assigned_driver_id IN (?)`
+	getCustomerByAuth                  = `SELECT * FROM tbcustomers WHERE token=?`
+	getCustomerById                    = `SELECT * FROM tbcustomers WHERE customer_id=?`
+	getDriverByAuth                    = `SELECT * FROM tbusers WHERE FIND_IN_SET(?, token)`
+	getDriverUserById                  = `SELECT * FROM tbusers WHERE userid=?`
+	insertInvoiceByCustomerId          = `INSERT INTO tbinvoice(customer_id,driver_id,source_lat,source_lng,source_address,destination_lat,destination_lng,source_time,total_minutes,cost_per_minute,time_cost,distance,cost_per_km,distance_cost,base_fare,extra_charges,discount,total_cost,gst_percentage,gst,final_cost) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+	getInvoiceByCustomerId             = `SELECT * FROM tbinvoice WHERE customer_id=? ORDER BY invoice_id DESC LIMIT `
+	insertRideDetails                  = `INSERT INTO tb_ride_details(customer_id,source_lat,source_long,destination_lat,destination_long,status,payment_method) VALUES(?,?,?,?,?,?,?)`
+	updateRideDetailsByRideId          = `UPDATE tb_ride_details SET status=?,driver_cancelled=?,rider_cancelled=?,ride_failed_time=? WHERE status<=2 AND id=?`
+	updateRideDetailsByRideIdAndStatus = `UPDATE tb_ride_details SET driver_id=?,status=?,ride_booked_time=? WHERE id=? and status=?`
+	updateRideStatusStartByRideId      = `UPDATE tb_ride_details SET status=?,ride_start_time=? WHERE id=?`
+	updateRideStatusFailedByRideId     = `UPDATE tb_ride_details SET status=?,ride_failed_time=? WHERE id=?`
+	updateRideStatusById               = `UPDATE tb_ride_details SET driver_id=?,status=? WHERE id=?`
+	updateRideCompleteById             = `UPDATE tb_ride_details SET status=?,ride_completed_time=?,destination_lat=?,destination_long=? WHERE id=?`
+
+	getRideDetailsByRideId = `SELECT id,customer_id,driver_id,source_lat,source_long,destination_lat,destination_long,status,created_at,updated_at,
+	driver_cancelled,rider_cancelled,ride_booked_time,ride_completed_time,ride_failed_time,ride_start_time,payment_method,
+	driver_rating,customer_rating,ride_cancel_msg FROM tb_ride_details WHERE id=?`
+
+	getRideDetailsByCustomerID = `SELECT id,customer_id,driver_id,source_lat,source_long,destination_lat,destination_long,status,created_at,updated_at,
+	driver_cancelled,rider_cancelled,ride_booked_time,ride_completed_time,ride_failed_time,ride_start_time,payment_method,
+	driver_rating,customer_rating,ride_cancel_msg FROM tb_ride_details WHERE customer_id=? ORDER BY id DESC LIMIT 1`
+
+	getRideDetailsByCustomerIDAndStatus = `SELECT id,customer_id,driver_id,source_lat,source_long,destination_lat,destination_long,status,created_at,updated_at,
+	driver_cancelled,rider_cancelled,ride_booked_time,ride_completed_time,ride_failed_time,ride_start_time,payment_method,
+	driver_rating,customer_rating,ride_cancel_msg FROM tb_ride_details WHERE customer_id=? AND status=? ORDER BY id DESC LIMIT 1`
+
+	getRideDetailsByDriverID = `SELECT id,customer_id,driver_id,source_lat,source_long,destination_lat,destination_long,status,created_at,updated_at,
+	driver_cancelled,rider_cancelled,ride_booked_time,ride_completed_time,ride_failed_time,ride_start_time,payment_method,
+	driver_rating,customer_rating,ride_cancel_msg FROM tb_ride_details WHERE driver_id=? ORDER BY id DESC LIMIT 1`
+
+	getRideDetailsStatusByCustomerID = `SELECT id,customer_id,driver_id,source_lat,source_long,destination_lat,destination_long,status,created_at,updated_at,
+	driver_cancelled,rider_cancelled,ride_booked_time,ride_completed_time,ride_failed_time,ride_start_time,payment_method,
+	driver_rating,customer_rating,ride_cancel_msg FROM tb_ride_details WHERE customer_id=? AND status IN (?) ORDER BY id`
+
+	getRideDetailsStatusByDriverID = `SELECT id,customer_id,driver_id,source_lat,source_long,destination_lat,destination_long,status,created_at,updated_at,
+	driver_cancelled,rider_cancelled,ride_booked_time,ride_completed_time,ride_failed_time,ride_start_time,payment_method,
+	driver_rating,customer_rating,ride_cancel_msg FROM tb_ride_details WHERE driver_id=? AND status IN (?) ORDER BY id`
+
+	insertTrackingData = `INSERT INTO tbtrackingdata(emailid,lat,lng,datetime,tracking_type,user_id) VALUES(?,?,?,?,?,?)`
+	getErrors          = `SELECT id,status,error_code,message,created_at,updated_at FROM tberrors`
 )
 
 func InitModel(db *DBTuktuk) {
