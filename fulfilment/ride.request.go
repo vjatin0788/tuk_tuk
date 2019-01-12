@@ -272,6 +272,24 @@ func (ff *FFClient) getDriversData(ctx context.Context, distances maps.DistanceM
 		}
 	}
 
+	//will be removed in future.
+	if len(drivers) == 0 {
+		for idx := range driverModel {
+			ddata, err := model.TukTuk.GetDriverUserById(ctx, driverModel[idx].DriverID)
+			if err != nil {
+				log.Println("[rideResponse][Error] DB error", err)
+				return drivers, err
+			}
+
+			if strings.EqualFold(ddata.Status, common.STATUS_ACTIVATE) && strings.EqualFold(ddata.Driverdutystatus, common.DRIVER_DUTY_STATUS) {
+				drivers = append(drivers, DriverData{
+					Id:       ddata.Userid,
+					DeviceId: ddata.DeviceId,
+				})
+			}
+		}
+	}
+
 	//only sorting on the basis of meters and new conditions can be added
 	sort.Slice(drivers, func(i, j int) bool { return drivers[i].Distance < drivers[j].Distance })
 
