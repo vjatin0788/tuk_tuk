@@ -21,7 +21,7 @@ func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}, 
 		TimeToLive: fb.Timeout,
 	}
 
-	log.Printf("[SendPushNotification]Sending Push Notif:%+v deviceIds:%s", data)
+	log.Printf("[SendPushNotification]Sending Push Notif:%+v data:%+v", data)
 
 	res, err := client.Send(msg)
 	if err != nil {

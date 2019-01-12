@@ -11,9 +11,9 @@ type PaymentData struct {
 	Distance     float64 `json:"distance"`
 	TimeTaken    int64   `json:"timeTaken"`
 	DistanceCost float64 `json:"distance_cost"`
-	CostPerKm    float64 `json:"costPerKm"`
+	CostPerKm    string  `json:"costPerKm"`
 	CostPerMin   float64 `json:"costPerMinute"`
-	TimeCost     string  `json:"timeCost"`
+	TimeCost     float64 `json:"timeCost"`
 	Gst          string  `json:"gst"`
 	BaseFare     float64 `json:"baseFare"`
 }
