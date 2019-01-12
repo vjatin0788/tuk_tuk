@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -44,12 +44,13 @@ func (pay *PaymentClient) preparePayment(ctx context.Context, rideId int64) (Pay
 		log.Println("[preparePayment][Error]Err in marshal:", err)
 	}
 
-	req, err := http.NewRequest(common.METHOD_POST, url, bytes.NewReader(body))
+	req, err := http.NewRequest(common.METHOD_POST, url, bytes.NewBuffer(body))
 	if err != nil {
 		log.Println("[preparePayment][Error]Err creating req ", err)
 		return paymentRes, err
 	}
 
+	req.Header.Add("Content-Type", "application/json")
 	log.Println("[preparePayment]req for payment ", req)
 
 	resp, err := pay.Client.Do(req)
@@ -65,14 +66,19 @@ func (pay *PaymentClient) preparePayment(ctx context.Context, rideId int64) (Pay
 		return paymentRes, err
 	}
 
-	//always use decoder in case of http req
-	if err = json.NewDecoder(resp.Body).Decode(&paymentRes); err != nil && err != io.EOF {
-		log.Println("[preparePayment][Error]Err unmarshaling resp", err)
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("[preparePayment][Error]Err in bytes ", err)
+		return paymentRes, err
+	}
+
+	err = json.Unmarshal(respBytes, &paymentRes)
+	if err != nil {
+		log.Println("[preparePayment][Error]Err in resp unmarshal ", err)
 		return paymentRes, err
 	}
 
 	log.Printf("[preparePayment] Payment resp:%+v", paymentRes)
 
 	return paymentRes, err
-
 }

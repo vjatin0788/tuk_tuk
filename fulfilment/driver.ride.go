@@ -278,7 +278,7 @@ func (ff *FFClient) prepareRideComplete(ctx context.Context, ride model.RideDeta
 
 	amount, err := ff.initiatePayment(ctx, ride.Id)
 	if err != nil {
-		log.Printf("[RideComplete][Error] Error in Payments:", err)
+		log.Println("[RideComplete][Error] Error in Payments:", err)
 		return defaultResp, errs.Err("PA_RI_400")
 	}
 
