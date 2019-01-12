@@ -67,27 +67,27 @@ func (fn HandlerFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 func (api *APIMod) InitHandler() {
 	r := mux.NewRouter()
 
-	r.Handle("/v1/tuktuk/driver/available", HandlerFunc(api.DriverAvailableHandler))
+	r.Handle("/v1/tuktuk/driver/available", HandlerFunc(api.DriverAvailableHandler)).Methods("GET")
 
-	r.Handle("/v1/tuktuk/driver/hotspot", HandlerFunc(api.DriverWebhook))
+	r.Handle("/v1/tuktuk/driver/hotspot", HandlerFunc(api.DriverWebhook)).Methods("GET")
 
-	r.Handle("/v1/tuktuk/driver/book", HandlerFunc(api.DriverBookHandler))
+	r.Handle("/v1/tuktuk/driver/book", HandlerFunc(api.DriverBookHandler)).Methods("GET")
 
-	r.Handle("/v1/tuktuk/driver/start", HandlerFunc(api.RideStartHandler))
+	r.Handle("/v1/tuktuk/driver/start", HandlerFunc(api.RideStartHandler)).Methods("GET")
 
-	r.Handle("/v1/tuktuk/driver/ride/cancel", HandlerFunc(api.DriverCancelHandler))
+	r.Handle("/v1/tuktuk/driver/ride/cancel", HandlerFunc(api.DriverCancelHandler)).Methods("POST")
 
-	r.Handle("/v1/tuktuk/driver/complete", HandlerFunc(api.RideCompleteHandler))
+	r.Handle("/v1/tuktuk/driver/complete", HandlerFunc(api.RideCompleteHandler)).Methods("POST")
 
-	r.Handle("/v1/tuktuk/driver/status", HandlerFunc(api.DriverStatusHandler))
+	r.Handle("/v1/tuktuk/driver/status", HandlerFunc(api.DriverStatusHandler)).Methods("GET")
 
-	r.Handle("/v1/tuktuk/rider/driver/location", HandlerFunc(api.DriverLocationHandler))
+	r.Handle("/v1/tuktuk/rider/driver/location", HandlerFunc(api.DriverLocationHandler)).Methods("GET")
 
-	r.Handle("/v1/tuktuk/rider/ride/cancel", HandlerFunc(api.RiderCancelHandler))
+	r.Handle("/v1/tuktuk/rider/ride/cancel", HandlerFunc(api.RiderCancelHandler)).Methods("POST")
 
-	r.Handle("/v1/tuktuk/rider/request", HandlerFunc(api.RequestRideHandler))
+	r.Handle("/v1/tuktuk/rider/request", HandlerFunc(api.RequestRideHandler)).Methods("GET")
 
-	r.Handle("/v1/tuktuk/rider/status", HandlerFunc(api.RiderStatusHandler))
+	r.Handle("/v1/tuktuk/rider/status", HandlerFunc(api.RiderStatusHandler)).Methods("GET")
 
 	http.Handle("/", r)
 	log.Println("Handler initialized")
