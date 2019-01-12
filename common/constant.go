@@ -17,12 +17,13 @@ const (
 	STATUS_ACTIVATE    = "Activate"
 	DRIVER_DUTY_STATUS = "On"
 	CASH               = "cash"
+	DRIVING_MODE       = "Driving"
 )
 
 //Endpoints
 const (
 	DISTANCE_MATRIX = "/maps/api/distancematrix/json"
-	DRIVING_MODE    = "Driving"
+	GET_PAYMENT     = "/getInvoice"
 )
 
 type STATUS_DETAIL struct {

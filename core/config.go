@@ -12,6 +12,7 @@ type Config struct {
 	Server   ServerConfig
 	Maps     GMaps
 	FireBase FBase
+	Payment  PaymentConfig
 }
 
 type GMaps struct {
@@ -28,6 +29,10 @@ type ServerConfig struct {
 	RideRequestTime time.Duration
 }
 
+type PaymentConfig struct {
+	Hostname string
+}
+
 func InitConfig() *Config {
 	CF = &Config{
 		Maps: GMaps{
@@ -40,6 +45,9 @@ func InitConfig() *Config {
 		},
 		Server: ServerConfig{
 			RideRequestTime: RIDE_REQUEST_TIME,
+		},
+		Payment: PaymentConfig{
+			Hostname: PAYMENT_LOCAL,
 		},
 	}
 	return CF

@@ -7,6 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TukTuk/errs"
+
+	"github.com/TukTuk/payment"
+
 	"github.com/TukTuk/common"
 	"github.com/TukTuk/firebase"
 	"github.com/TukTuk/lib"
@@ -258,7 +262,7 @@ func (ff *FFClient) prepareRideComplete(ctx context.Context, ride model.RideDeta
 	//hit payment method api
 	log.Printf("[RideComplete] Hitting payment api")
 	var message string
-	if ride.PaymentMethod == common.CASH {
+	if strings.EqualFold(ride.PaymentMethod, common.CASH) {
 		message = "COLLECT CASH"
 	}
 
@@ -272,10 +276,16 @@ func (ff *FFClient) prepareRideComplete(ctx context.Context, ride model.RideDeta
 
 	ff.sendPushNotificationToCustomer(ctx, ride, dataPush)
 
+	amount, err := ff.initiatePayment(ctx, ride.Id)
+	if err != nil {
+		log.Printf("[RideComplete][Error] Error in Payments:", err)
+		return defaultResp, errs.Err("PA_RI_400")
+	}
+
 	defaultResp = &RideCompleteResponse{
 		Success: true,
 		Message: message,
-		Amount:  0,
+		Amount:  amount,
 	}
 
 	return defaultResp, err
@@ -535,4 +545,20 @@ func (ff *FFClient) updateTrackingDetails(ctx context.Context, drModel model.Dri
 	}
 
 	return err
+}
+
+func (ff *FFClient) initiatePayment(ctx context.Context, rideId int64) (float64, error) {
+	var (
+		defaultVal float64
+		err        error
+	)
+	//add verifications
+	resp, err := payment.PayClient.InitiatePaymentRequest(ctx, rideId)
+	if err != nil {
+		return defaultVal, err
+	}
+
+	defaultVal = resp.Data.TotalCost
+
+	return defaultVal, err
 }
