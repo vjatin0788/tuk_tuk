@@ -160,12 +160,12 @@ func (table RideDetailTabel) UpdateRideDetails(ctx context.Context) (int64, erro
 	return rowCount, err
 }
 
-func (db *DBTuktuk) UpdateRideWithStatus(ctx context.Context, rideModel RideDetailModel) (int64, error) {
+func (db *DBTuktuk) UpdateRideWithStatus(ctx context.Context, rideModel RideDetailModel, status int64) (int64, error) {
 	//validations neeed to be inserted here
-	return rideModel.GetTable().updateRideDetailsAndStatus(ctx)
+	return rideModel.GetTable().updateRideDetailsAndStatus(ctx, status)
 }
 
-func (table RideDetailTabel) updateRideDetailsAndStatus(ctx context.Context) (int64, error) {
+func (table RideDetailTabel) updateRideDetailsAndStatus(ctx context.Context, status int64) (int64, error) {
 
 	var (
 		err      error
@@ -173,7 +173,7 @@ func (table RideDetailTabel) updateRideDetailsAndStatus(ctx context.Context) (in
 	)
 
 	row, err := statement.UpdateRideDetailsWithStatus.Exec(table.DriverId, table.Status,
-		table.RideBookedTime.String, table.Id)
+		table.RideBookedTime.String, table.Id, status)
 	if err != nil {
 		log.Println("[UpdateRideDetails][Error] Err in inserting", err)
 		return rowCount, err
