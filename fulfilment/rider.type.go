@@ -92,9 +92,9 @@ type PushNotification struct {
 }
 
 type RideCompleteResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Amount  int64  `json:"amount"`
+	Success bool    `json:"success"`
+	Message string  `json:"message"`
+	Amount  float64 `json:"amount"`
 }
 
 type RideCompleteRequest struct {

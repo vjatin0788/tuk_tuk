@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/TukTuk/payment"
+
 	"github.com/TukTuk/errs"
 	"github.com/TukTuk/firebase"
 
@@ -36,6 +38,8 @@ func main() {
 
 	maps.InitMaps(cfg)
 	errs.InitError()
+
+	payment.InitPayment(cfg)
 
 	log.Printf("serving at localhost:%d", 8000)
 	log.Fatal(http.ListenAndServe(":8000", nil))
