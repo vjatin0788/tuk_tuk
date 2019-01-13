@@ -47,7 +47,7 @@ func InitConfig() *Config {
 			RideRequestTime: RIDE_REQUEST_TIME,
 		},
 		Payment: PaymentConfig{
-			Hostname: PAYMENT_LOCAL,
+			Hostname: PAYMENT_STAGING,
 		},
 	}
 	return CF
