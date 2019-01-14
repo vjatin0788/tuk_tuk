@@ -89,6 +89,9 @@ func (api *APIMod) RequestRideHandler(rw http.ResponseWriter, r *http.Request) (
 
 	paymentMethod := r.FormValue("payment_method")
 
+	sourceAddres := r.FormValue("source_address")
+	destinationAddress := r.FormValue("destination_address")
+
 	userid := r.Header.Get("User-Id")
 	if userid == "" {
 		log.Println("[RequestRide][Error] empty user id")
@@ -101,7 +104,7 @@ func (api *APIMod) RequestRideHandler(rw http.ResponseWriter, r *http.Request) (
 		return nil, errors.New("Error parsing int")
 	}
 
-	data, err := fulfilment.FF.RequestRide(ctx, uid, sourceVal[0], sourceVal[1], destVal[0], destVal[1], vehicleType, paymentMethod)
+	data, err := fulfilment.FF.RequestRide(ctx, uid, sourceVal[0], sourceVal[1], destVal[0], destVal[1], vehicleType, paymentMethod, sourceAddres, destinationAddress)
 	if err != nil {
 		log.Println("[RequestRide][Error] Err in request ride", err)
 

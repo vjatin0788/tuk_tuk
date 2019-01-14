@@ -53,6 +53,7 @@ type DriverBookedResponse struct {
 
 type CustomerDetailsResponse struct {
 	CustomerId      int64   `json:"customer_id,omitempty"`
+	PhoneNumber     string  `json:"phone_number,omitempty"`
 	Name            string  `json:"name,omitempty"`
 	SourceLat       float64 `json:"source_lat,omitempty"`
 	SourceLong      float64 `json:"source_long,omitempty"`
