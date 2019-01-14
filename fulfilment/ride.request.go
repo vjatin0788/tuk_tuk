@@ -18,7 +18,7 @@ import (
 	"github.com/TukTuk/model"
 )
 
-func (ff *FFClient) RequestRide(ctx context.Context, customerID int64, sLat, sLong, dLat, dLong float64, vehicleType, paymentMethod string) (interface{}, error) {
+func (ff *FFClient) RequestRide(ctx context.Context, customerID int64, sLat, sLong, dLat, dLong float64, vehicleType, paymentMethod, source, destination string) (interface{}, error) {
 
 	log.Printf("[RequestRide] Ride Source Lat:%f,Long:%f and Destination Lat:%f,Long:%f", sLat, sLong, dLat, dLong)
 
@@ -36,7 +36,7 @@ func (ff *FFClient) RequestRide(ctx context.Context, customerID int64, sLat, sLo
 		return nil, errors.New("Ride Invalid state")
 	}
 
-	data, err := ff.prepareRide(ctx, customerID, sLat, sLong, dLat, dLong, vehicleType, paymentMethod)
+	data, err := ff.prepareRide(ctx, customerID, sLat, sLong, dLat, dLong, vehicleType, paymentMethod, source, destination)
 	if err != nil {
 		log.Println("[RequestRide][Error] Error in preparing ride", err)
 		return nil, err
@@ -45,7 +45,7 @@ func (ff *FFClient) RequestRide(ctx context.Context, customerID int64, sLat, sLo
 	return data, err
 }
 
-func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, dLat, dLong float64, vehicleType, paymentMethod string) (*RideBookResponse, error) {
+func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, dLat, dLong float64, vehicleType, paymentMethod, source, destination string) (*RideBookResponse, error) {
 	var (
 		ride   model.RideDetailModel
 		resp   *RideBookResponse
@@ -59,12 +59,14 @@ func (ff *FFClient) prepareRide(ctx context.Context, custId int64, sLat, sLong, 
 	}
 
 	ride = model.RideDetailModel{
-		CustomerId:      custId,
-		SourceLat:       sLat,
-		SourceLong:      sLong,
-		DestinationLat:  dLat,
-		DestinationLong: dLong,
-		PaymentMethod:   paymentMethod,
+		CustomerId:        custId,
+		SourceLat:         sLat,
+		SourceLong:        sLong,
+		DestinationLat:    dLat,
+		DestinationLong:   dLong,
+		PaymentMethod:     paymentMethod,
+		SourceAddress:     source,
+		DestinationAddres: destination,
 	}
 
 	err = ff.RideStateTransition(ctx, &ride, common.RideStatus.REQUESTED.ID)

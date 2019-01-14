@@ -439,7 +439,8 @@ func (ff *FFClient) GetDriverRideStatus(ctx context.Context, id int64) (interfac
 
 		defaultRes = append(defaultRes, RideBookResponse{
 			CustomerDetail: &CustomerDetailsResponse{
-				Name: userData.Name,
+				Name:        userData.Name,
+				PhoneNumber: userData.Mobile,
 			},
 			SourceLat:       ride.SourceLat,
 			SourceLong:      ride.SourceLong,

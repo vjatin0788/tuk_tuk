@@ -190,6 +190,7 @@ func (ff *FFClient) GetCustomerRideStatus(ctx context.Context, custId int64) (in
 				CurrentLat:  driver.CurrentLatitude,
 				CurrentLong: driver.CurrentLongitude,
 				DriverImage: ddata.Driverpic,
+				PhoneNumber: ddata.Mobileno,
 			},
 			SourceLat:       ride.SourceLat,
 			SourceLong:      ride.SourceLong,

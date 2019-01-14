@@ -29,6 +29,8 @@ type RideDetailModel struct {
 	RideCancelReason  string  `db:"ride_cancel_msg" json:"ride_cancel_msg"`
 	CustomerRating    int64   `db:"customer_rating" json:"customer_rating"`
 	DriverRating      int64   `db:"driver_rating" json:"driver_rating"`
+	SourceAddress     string  `db:"source_address" json:"source_address"`
+	DestinationAddres string  `db:"destination_address" json:"destination_address"`
 }
 
 type RideDetailTabel struct {
@@ -52,6 +54,8 @@ type RideDetailTabel struct {
 	RideCancelReason  sql.NullString `db:"ride_cancel_msg" json:"ride_cancel_msg"`
 	CustomerRating    sql.NullInt64  `db:"customer_rating" json:"customer_rating"`
 	DriverRating      sql.NullInt64  `db:"driver_rating" json:"driver_rating"`
+	SourceAddress     sql.NullString `db:"source_address" json:"source_address"`
+	DestinationAddres sql.NullString `db:"destination_address" json:"destination_address"`
 }
 
 func (table RideDetailTabel) GetModel() RideDetailModel {
@@ -76,6 +80,8 @@ func (table RideDetailTabel) GetModel() RideDetailModel {
 		RideCancelReason:  table.RideCancelReason.String,
 		CustomerRating:    table.CustomerRating.Int64,
 		DriverRating:      table.DriverRating.Int64,
+		SourceAddress:     table.SourceAddress.String,
+		DestinationAddres: table.DestinationAddres.String,
 	}
 }
 
@@ -101,6 +107,8 @@ func (model RideDetailModel) GetTable() RideDetailTabel {
 		RideCancelReason:  sql.NullString{model.RideCancelReason, false},
 		DriverRating:      sql.NullInt64{model.DriverRating, false},
 		CustomerRating:    sql.NullInt64{model.CustomerRating, false},
+		SourceAddress:     sql.NullString{model.SourceAddress, false},
+		DestinationAddres: sql.NullString{model.DestinationAddres, false},
 	}
 }
 
@@ -113,7 +121,7 @@ func (table RideDetailTabel) InsertRideDetails(ctx context.Context) (int64, erro
 
 	var err error
 
-	res, err := statement.InsertRideDetails.Exec(table.CustomerId, table.SourceLat, table.SourceLong, table.DestinationLat, table.DestinationLong, table.Status, table.PaymentMethod.String)
+	res, err := statement.InsertRideDetails.Exec(table.CustomerId, table.SourceLat, table.SourceLong, table.DestinationLat, table.DestinationLong, table.Status, table.PaymentMethod.String, table.SourceAddress.String, table.DestinationAddres.String)
 	if err != nil {
 		log.Println("[InsertRideDetails][Error] Err in inserting", err)
 		return 0, err
