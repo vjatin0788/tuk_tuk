@@ -519,6 +519,7 @@ func (ff *FFClient) sendNotification(ctx context.Context, ride *model.RideDetail
 			CurrentLat:  ride.SourceLat,
 			CurrentLong: ride.SourceLong,
 			Name:        userData.Name,
+			PhoneNumber: userData.Mobile,
 		},
 	}
 

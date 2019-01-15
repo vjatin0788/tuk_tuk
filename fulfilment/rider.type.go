@@ -80,6 +80,7 @@ type PushNotificationRideRequest struct {
 	CurrentLong float64 `json:"current_long"`
 	RideId      int64   `json:"ride_id"`
 	Name        string  `json:"name"`
+	PhoneNumber string  `json:"phone_number"`
 }
 
 type PushNotificationInvalidRide struct {
@@ -102,21 +103,31 @@ type RideCompleteRequest struct {
 	RideId          int64   `json:"ride_id"`
 	DestinationLat  float64 `json:"destination_lat"`
 	DestinationLong float64 `json:"destination_long"`
+	PhoneNumber     string  `json:"phone_number"`
 }
 
 type PushNotificationRideComplete struct {
-	RideId  int64  `json:"ride_id"`
-	Message string `json:"message"`
+	RideId      int64  `json:"ride_id"`
+	Message     string `json:"message"`
+	PhoneNumber string `json:"phone_number"`
 }
 
 type PushNotificationRideCancel struct {
-	RideId  int64  `json:"ride_id"`
-	Message string `json:"message"`
+	RideId      int64  `json:"ride_id"`
+	Message     string `json:"message"`
+	PhoneNumber string `json:"phone_number"`
 }
 
 type PushNotificationRideStart struct {
-	RideId  int64  `json:"ride_id"`
-	Message string `json:"message"`
+	RideId      int64  `json:"ride_id"`
+	Message     string `json:"message"`
+	PhoneNumber string `json:"phone_number"`
+}
+
+type PushNotificationDriverArrived struct {
+	RideId      int64  `json:"ride_id"`
+	Message     string `json:"message"`
+	PhoneNumber string `json:"phone_number"`
 }
 
 type RideCancelRequest struct {

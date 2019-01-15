@@ -83,8 +83,9 @@ func (ff *FFClient) StartRide(ctx context.Context, userId, rideId int64) (interf
 	dataPush := PushNotification{
 		Type: "ride_start",
 		Data: PushNotificationRideStart{
-			RideId:  rideDetail.Id,
-			Message: "Ride Started",
+			RideId:      rideDetail.Id,
+			Message:     "Ride Started",
+			PhoneNumber: ddata.Mobileno,
 		},
 	}
 
@@ -180,13 +181,23 @@ func (ff *FFClient) prepareDriverLocationResponse(ctx context.Context, ride mode
 		return defaultResp, errors.New("Driver Id mismatch")
 	}
 
+	ddata, err := model.TukTuk.GetDriverUserById(ctx, data.DriverID)
+	if err != nil {
+		log.Println("[prepareDriverLocationResponse][Error] DB error", data.DriverID)
+	}
+
+	if ddata.Userid != data.DriverID {
+		log.Printf("[prepareDriverLocationResponse][Error] Invalid driver id. found:%d, req: %d", ddata.Userid, data.DriverID)
+		return defaultResp, err
+	}
+
 	defaultResp = &DriverLocationResponse{
 		CurrentLat:  data.CurrentLatitude,
 		CurrentLong: data.CurrentLongitude,
 		RideId:      ride.Id,
 	}
 
-	go ff.sendNoitificationDriverArrived(ctx, &ride, data, customerData)
+	go ff.sendNotificationDriverArrived(ctx, &ride, data, customerData, ddata)
 
 	return defaultResp, err
 }
@@ -566,7 +577,7 @@ func (ff *FFClient) initiatePayment(ctx context.Context, rideId int64) (float64,
 	return defaultVal, err
 }
 
-func (ff *FFClient) sendNoitificationDriverArrived(ctx context.Context, ride *model.RideDetailModel, driverTrackData model.DriverTrackingModel, customerData model.CustomerModel) {
+func (ff *FFClient) sendNotificationDriverArrived(ctx context.Context, ride *model.RideDetailModel, driverTrackData model.DriverTrackingModel, customerData model.CustomerModel, driverData model.DriverUserModel) {
 
 	fbclient := firebase.FClient
 
@@ -574,25 +585,27 @@ func (ff *FFClient) sendNoitificationDriverArrived(ctx context.Context, ride *mo
 	if ff.liesInCustomerArea(ctx, ride.SourceLat, ride.SourceLong, ride.DestinationLat, ride.DestinationLong, ff.Cfg.Ride.DriverArrived) {
 		payLoad = PushNotification{
 			Type: "ride_driver_arrived",
-			Data: PushNotificationRideCancel{
-				RideId:  ride.Id,
-				Message: "DRIVER ARRIVED",
+			Data: PushNotificationDriverArrived{
+				RideId:      ride.Id,
+				Message:     "DRIVER ARRIVED",
+				PhoneNumber: driverData.Mobileno,
 			},
 		}
 
-		log.Println("[sendNoitificationDriverArrived] Driver arrived")
+		log.Println("[sendNotificationDriverArrived] Driver arrived")
 	} else if ff.liesInCustomerArea(ctx, ride.SourceLat, ride.SourceLong, ride.DestinationLat, ride.DestinationLong, ff.Cfg.Ride.DriverArrival) {
 		payLoad = PushNotification{
 			Type: "ride_driver_arriving",
-			Data: PushNotificationRideCancel{
-				RideId:  ride.Id,
-				Message: "DRIVER ARRIVING",
+			Data: PushNotificationDriverArrived{
+				RideId:      ride.Id,
+				Message:     "DRIVER ARRIVING",
+				PhoneNumber: driverData.Mobileno,
 			},
 		}
 
-		log.Println("[sendNoitificationDriverArrived] Driver arrival")
+		log.Println("[sendNotificationDriverArrived] Driver arrival")
 	} else {
-		log.Println("[sendNoitificationDriverArrived] Driver Not arrived yet")
+		log.Println("[sendNotificationDriverArrived] Driver Not arrived yet")
 		return
 	}
 
