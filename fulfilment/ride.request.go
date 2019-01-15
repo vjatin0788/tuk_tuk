@@ -446,13 +446,13 @@ rideLoop:
 	return res, err
 }
 
-func (ff *FFClient) liesInCustomerArea(ctx context.Context, sLat, sLong, dLat, dLong float64) bool {
+func (ff *FFClient) liesInCustomerArea(ctx context.Context, sLat, sLong, dLat, dLong, distance float64) bool {
 
 	//haversine formula
 	currentPoint := math.Acos(math.Sin(lib.Rad(sLat))*math.Sin(lib.Rad(dLat)) + math.Cos(lib.Rad(sLat))*math.Cos(lib.Rad(dLat))*math.Cos(lib.Rad(dLong)-lib.Rad(sLong)))
 
-	log.Printf("[liesInCustomerArea] Current Point:%f, dist/rad:%f", currentPoint, DISTANCE/RADIUS)
-	if currentPoint <= (DISTANCE / RADIUS) {
+	log.Printf("[liesInCustomerArea] Current Point:%f, dist/rad:%f", currentPoint, distance/RADIUS)
+	if currentPoint <= (distance / RADIUS) {
 		log.Printf("[liesInCustomerArea] location valid for driver lat:%f ,long:%f", dLat, dLong)
 		return true
 	}
@@ -468,7 +468,7 @@ func (ff *FFClient) checkIfDriverLocValid(ctx context.Context, ride *model.RideD
 
 	log.Printf("[checkIfDriverLocValid] driver result:%+v", driverTrackModel)
 
-	return ff.liesInCustomerArea(ctx, ride.SourceLat, ride.SourceLong, driverTrackModel.CurrentLatitude, driverTrackModel.CurrentLongitude)
+	return ff.liesInCustomerArea(ctx, ride.SourceLat, ride.SourceLong, driverTrackModel.CurrentLatitude, driverTrackModel.CurrentLongitude, DISTANCE)
 }
 
 func (ff *FFClient) checkIfDriverBookedIsValid(ctx context.Context, ride *model.RideDetailModel, drivers []DriverData) bool {
@@ -519,6 +519,7 @@ func (ff *FFClient) sendNotification(ctx context.Context, ride *model.RideDetail
 			CurrentLat:  ride.SourceLat,
 			CurrentLong: ride.SourceLong,
 			Name:        userData.Name,
+			PhoneNumber: userData.Mobile,
 		},
 	}
 
