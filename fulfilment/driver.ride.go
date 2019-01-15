@@ -158,10 +158,10 @@ func (ff *FFClient) GetDriverCurrentLocation(ctx context.Context, userId, rideId
 
 	log.Printf("[GetDriverCurrentLocation] Customer data:%+v ", ddata)
 
-	return ff.prepareDriverLocationResponse(ctx, rideDetail)
+	return ff.prepareDriverLocationResponse(ctx, rideDetail, ddata)
 }
 
-func (ff *FFClient) prepareDriverLocationResponse(ctx context.Context, ride model.RideDetailModel) (*DriverLocationResponse, error) {
+func (ff *FFClient) prepareDriverLocationResponse(ctx context.Context, ride model.RideDetailModel, customerData model.CustomerModel) (*DriverLocationResponse, error) {
 	var (
 		defaultResp *DriverLocationResponse
 		err         error
@@ -185,6 +185,8 @@ func (ff *FFClient) prepareDriverLocationResponse(ctx context.Context, ride mode
 		CurrentLong: data.CurrentLongitude,
 		RideId:      ride.Id,
 	}
+
+	go ff.sendNoitificationDriverArrived(ctx, &ride, data, customerData)
 
 	return defaultResp, err
 }
@@ -562,4 +564,37 @@ func (ff *FFClient) initiatePayment(ctx context.Context, rideId int64) (float64,
 	defaultVal = resp.Data.TotalCost
 
 	return defaultVal, err
+}
+
+func (ff *FFClient) sendNoitificationDriverArrived(ctx context.Context, ride *model.RideDetailModel, driverTrackData model.DriverTrackingModel, customerData model.CustomerModel) {
+
+	fbclient := firebase.FClient
+
+	var payLoad PushNotification
+	if ff.liesInCustomerArea(ctx, ride.SourceLat, ride.SourceLong, ride.DestinationLat, ride.DestinationLong, ff.Cfg.Ride.DriverArrived) {
+		payLoad = PushNotification{
+			Type: "ride_driver_arrived",
+			Data: PushNotificationRideCancel{
+				RideId:  ride.Id,
+				Message: "DRIVER ARRIVED",
+			},
+		}
+
+		log.Println("[sendNoitificationDriverArrived] Driver arrived")
+	} else if ff.liesInCustomerArea(ctx, ride.SourceLat, ride.SourceLong, ride.DestinationLat, ride.DestinationLong, ff.Cfg.Ride.DriverArrival) {
+		payLoad = PushNotification{
+			Type: "ride_driver_arriving",
+			Data: PushNotificationRideCancel{
+				RideId:  ride.Id,
+				Message: "DRIVER ARRIVING",
+			},
+		}
+
+		log.Println("[sendNoitificationDriverArrived] Driver arrival")
+	} else {
+		log.Println("[sendNoitificationDriverArrived] Driver Not arrived yet")
+		return
+	}
+
+	fbclient.SendPushNotification(ctx, payLoad, customerData.DeviceId)
 }

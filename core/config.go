@@ -13,6 +13,13 @@ type Config struct {
 	Maps     GMaps
 	FireBase FBase
 	Payment  PaymentConfig
+	Ride     RideConfig
+}
+
+type RideConfig struct {
+	DriverArrival     float64
+	DriverArrived     float64
+	RideRequestRadius float64
 }
 
 type GMaps struct {
@@ -48,6 +55,10 @@ func InitConfig() *Config {
 		},
 		Payment: PaymentConfig{
 			Hostname: PAYMENT_STAGING,
+		},
+		Ride: RideConfig{
+			DriverArrival: DRIVER_ARRIVAL,
+			DriverArrived: DRIVER_ARRIVED,
 		},
 	}
 	return CF

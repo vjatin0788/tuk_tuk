@@ -9,4 +9,7 @@ const (
 	FIREBASE_KEY           = ""
 	RIDE_REQUEST_TIME      = 30 * 1000000000 * time.Nanosecond
 	FIREBASE_TIMEOUT       = 10
+	DRIVER_ARRIVED         = 0.100
+	DRIVER_ARRIVAL         = 0.500
+	RIDE_REQUEST_LOC       = 3.000
 )
