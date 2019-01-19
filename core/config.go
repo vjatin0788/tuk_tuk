@@ -38,6 +38,7 @@ type ServerConfig struct {
 
 type PaymentConfig struct {
 	Hostname string
+	Timeout  time.Duration
 }
 
 func InitConfig() *Config {
@@ -55,6 +56,7 @@ func InitConfig() *Config {
 		},
 		Payment: PaymentConfig{
 			Hostname: PAYMENT_STAGING,
+			Timeout:  PAYMENT_TIMEOUT,
 		},
 		Ride: RideConfig{
 			DriverArrival: DRIVER_ARRIVAL,

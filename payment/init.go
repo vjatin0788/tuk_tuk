@@ -2,7 +2,6 @@ package payment
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/TukTuk/core"
 )
@@ -17,7 +16,7 @@ type PaymentClient struct {
 func InitPayment(cfg *core.Config) {
 	PayClient = &PaymentClient{
 		Client: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: cfg.Payment.Timeout,
 		},
 		Cfg: cfg,
 	}
