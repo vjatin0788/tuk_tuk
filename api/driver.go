@@ -35,8 +35,6 @@ func (api *APIMod) DriverWebhook(rw http.ResponseWriter, r *http.Request) (inter
 		return nil, errors.New("Wrong Long value")
 	}
 
-	log.Printf("[DriverWebhook]Lat:%s,Long:%s", lat, long)
-
 	userid := r.Header.Get("User-Id")
 	//verify user id. this will be driver id
 	if userid == "" {
@@ -54,7 +52,6 @@ func (api *APIMod) DriverWebhook(rw http.ResponseWriter, r *http.Request) (inter
 	if authToken == "" {
 		log.Println("[DriverAvailableHandler][Error] empty token")
 		return nil, errs.Err("TT_AU_401")
-
 	}
 
 	duser, err := authentication.Auth.Authentication(ctx, false, true, authToken)
