@@ -279,21 +279,22 @@ func (ff *FFClient) prepareRideComplete(ctx context.Context, ride model.RideDeta
 		message = "COLLECT CASH"
 	}
 
-	dataPush := PushNotification{
-		Type: "ride_complete",
-		Data: PushNotificationRideComplete{
-			RideId:  ride.Id,
-			Message: "RIDE COMPLETE",
-		},
-	}
-
-	ff.sendPushNotificationToCustomer(ctx, ride, dataPush)
-
 	amount, err := ff.initiatePayment(ctx, ride.Id)
 	if err != nil {
 		log.Println("[RideComplete][Error] Error in Payments:", err)
 		return defaultResp, errs.Err("PA_RI_400")
 	}
+
+	dataPush := PushNotification{
+		Type: "ride_complete",
+		Data: PushNotificationRideComplete{
+			RideId:  ride.Id,
+			Message: "RIDE COMPLETE",
+			Amount:  amount,
+		},
+	}
+
+	ff.sendPushNotificationToCustomer(ctx, ride, dataPush)
 
 	defaultResp = &RideCompleteResponse{
 		Success: true,
@@ -535,6 +536,7 @@ func (ff *FFClient) DriverTracking(ctx context.Context, userLat, userLong float6
 		return nil, err
 	}
 
+	log.Printf("[DriverTracking]Driver id:%d ,Lat:%f, Long:%f", driver.DriverID, driver.CurrentLatitude, driver.CurrentLongitude)
 	defaultRes.Success = true
 
 	return defaultRes, err

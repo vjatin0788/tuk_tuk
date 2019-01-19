@@ -68,7 +68,6 @@ func (auth *TukTukAuth) getCustomerData(ctx context.Context, authToken string) (
 		Token: userData.Token,
 	}
 
-	log.Printf("%+v", user)
 	return user, err
 }
 
@@ -88,6 +87,5 @@ func (auth *TukTukAuth) getDriverData(ctx context.Context, authToken string) (Us
 		Id:    userData.Userid,
 		Token: userData.Token,
 	}
-	log.Printf("%+v", user)
 	return user, err
 }
