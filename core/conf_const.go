@@ -12,4 +12,5 @@ const (
 	DRIVER_ARRIVED         = 0.100
 	DRIVER_ARRIVAL         = 0.500
 	RIDE_REQUEST_LOC       = 3.000
+	PAYMENT_TIMEOUT        = 30 * time.Second
 )
