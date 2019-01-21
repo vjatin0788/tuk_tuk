@@ -110,7 +110,7 @@ type PushNotificationRideComplete struct {
 	RideId      int64   `json:"ride_id"`
 	Message     string  `json:"message"`
 	PhoneNumber string  `json:"phone_number"`
-	Amount      float64 `json:"amount"`
+	Amount      float64 `json:"trip_cost"`
 }
 
 type PushNotificationRideCancel struct {
