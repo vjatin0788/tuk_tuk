@@ -134,7 +134,7 @@ func (ff *FFClient) findDriver(ctx context.Context, ride *model.RideDetailModel,
 
 	if len(drivers) == 0 {
 		log.Println("[FindDriver] Not Driver available for given vehicle type")
-		return defaultRes, err
+		return defaultRes, errors.New("RR_FD_400")
 	}
 
 	//preparing destination and source for gmaps
