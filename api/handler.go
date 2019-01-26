@@ -39,7 +39,7 @@ func (fn HandlerFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	if data != nil && err == nil {
 		response.Data = data
-		log.Println(data)
+		//log.Println(data)
 	}
 
 	if err != nil {

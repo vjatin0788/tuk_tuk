@@ -296,6 +296,10 @@ func (ff *FFClient) prepareRideComplete(ctx context.Context, ride model.RideDeta
 
 	ff.sendPushNotificationToCustomer(ctx, ride, dataPush)
 
+	//Delete ride from map after completion
+	delete(DriverBookedNotifiedMap, ride.Id)
+	delete(RequestRideCancel, ride.Id)
+
 	defaultResp = &RideCompleteResponse{
 		Success: true,
 		Message: message,
@@ -508,7 +512,6 @@ func (ff *FFClient) DriverTracking(ctx context.Context, userLat, userLong float6
 		CurrentLongitudeRadian: lib.Rad(userLong),
 	}
 
-	log.Println("driver id:", driver.DriverID)
 	if driver.DriverID == 0 {
 		err = model.TukTuk.Create(ctx, driverModel)
 		if err != nil {
