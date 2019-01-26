@@ -296,6 +296,10 @@ func (ff *FFClient) prepareRideComplete(ctx context.Context, ride model.RideDeta
 
 	ff.sendPushNotificationToCustomer(ctx, ride, dataPush)
 
+	//Delete ride from map after completion
+	delete(DriverBookedNotifiedMap, ride.Id)
+	delete(RequestRideCancel, ride.Id)
+
 	defaultResp = &RideCompleteResponse{
 		Success: true,
 		Message: message,
