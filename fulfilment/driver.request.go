@@ -45,7 +45,15 @@ func (ff *FFClient) DriverBooked(ctx context.Context, userId, rideId int64, isBo
 	if !isBooked {
 		// marking driver Cancelled.
 		//we can add more analysis about how many rides cancelled by driver.
+		//sending notification to ride request
 		log.Println("[DriverBooked] Driver Declined the request for ride id:", rideId)
+
+		if val, ok := DriverBookingDenied[rideDetail.Id]; ok {
+			val <- true
+		} else {
+			log.Println("[DriverBooked][Error] Declining for ride id:", rideId)
+		}
+
 		return defaultRes, err
 	}
 

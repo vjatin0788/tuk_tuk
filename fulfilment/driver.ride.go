@@ -299,6 +299,7 @@ func (ff *FFClient) prepareRideComplete(ctx context.Context, ride model.RideDeta
 	//Delete ride from map after completion
 	delete(DriverBookedNotifiedMap, ride.Id)
 	delete(RequestRideCancel, ride.Id)
+	delete(DriverBookingDenied, ride.Id)
 
 	defaultResp = &RideCompleteResponse{
 		Success: true,

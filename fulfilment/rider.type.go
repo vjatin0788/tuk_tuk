@@ -1,6 +1,6 @@
 package fulfilment
 
-var DriverBookedNotifiedMap, RequestRideCancel map[int64]chan bool
+var DriverBookedNotifiedMap, RequestRideCancel, DriverBookingDenied map[int64]chan bool
 
 type RiderAvailableResponse struct {
 	DriverDetails    DriverDetailsResponse `json:"driver_details"`
@@ -89,8 +89,9 @@ type PushNotificationInvalidRide struct {
 }
 
 type PushNotification struct {
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
+	Type         string      `json:"type"`
+	Data         interface{} `json:"data"`
+	Notification interface{} `json:"notification"`
 }
 
 type RideCompleteResponse struct {

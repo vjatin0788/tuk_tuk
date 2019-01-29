@@ -8,6 +8,7 @@ const (
 	MASTER_DB_LOCAL    = "root:12345@/tuktuk?parseTime=true&loc=Local&allowNativePasswords=true"
 	MASTER_DB          = "tuktuk_user:tuktuk_123@tcp(122.160.30.50:3306)/tuktuk?parseTime=true&loc=Local&allowNativePasswords=true"
 	MASTER_DB_PROD     = "tuktuk:Tadmin123@tcp(tuktukdb.cx4mkb6ac5le.ap-south-1.rds.amazonaws.com)/tuktuk?parseTime=true&loc=Local&allowNativePasswords=true"
+	MASTER_DB_STAG     = "tuktukadm:Tadmin123@tcp(tuktukprod-db.cx4mkb6ac5le.ap-south-1.rds.amazonaws.com)/tuktuk?parseTime=true&loc=Local&allowNativePasswords=true"
 	API_KEY            = ""
 	METHOD_GET         = "GET"
 	METHOD_POST        = "POST"
