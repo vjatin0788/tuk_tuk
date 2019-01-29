@@ -50,7 +50,7 @@ func (api *APIMod) DriverWebhook(rw http.ResponseWriter, r *http.Request) (inter
 
 	authToken := r.Header.Get("TUKTUK_TOKEN")
 	if authToken == "" {
-		log.Println("[DriverAvailableHandler][Error] empty token")
+		log.Println("[DriverWebhook][Error] empty token")
 		return nil, errs.Err("TT_AU_401")
 	}
 

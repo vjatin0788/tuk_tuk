@@ -42,7 +42,7 @@ func (api *APIMod) DriverAvailableHandler(rw http.ResponseWriter, r *http.Reques
 
 	authToken := r.Header.Get("TUKTUK_TOKEN")
 	if authToken == "" {
-		log.Println("[DriverAvailableHandler][Error] empty token")
+		log.Println("[DriverAvailableHandler][Error] TT_AU_401:empty token")
 		return nil, errs.Err("TT_AU_401")
 	}
 

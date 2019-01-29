@@ -127,14 +127,39 @@ func (ff *FFClient) findDriver(ctx context.Context, ride *model.RideDetailModel,
 		return nil, errors.New("Empty Lat long")
 	}
 
-	drivers, err := ff.getAvailableDriverVehicle(ctx, ride.SourceLat, ride.SourceLong, vehicleType)
+	driversList, err := ff.getDriversForRideRequest(ctx, ride, vehicleType)
 	if err != nil {
 		return nil, err
 	}
 
+	log.Printf("Final Driver List:%+v", driversList)
+
+	if len(driversList) == 0 {
+		return defaultRes, err
+	}
+
+	// send push notification.
+	driverAloted, err := ff.driverBookAndSendNotification(ctx, driversList, ride)
+	if err != nil {
+		log.Println("[FindDriver][Error] Err in sending push notification", err)
+		return nil, err
+	}
+
+	return ff.rideResponse(ctx, driverAloted, ride)
+}
+
+func (ff *FFClient) getDriversForRideRequest(ctx context.Context, ride *model.RideDetailModel, vehicleType string) ([]DriverData, error) {
+
+	var driverResp []DriverData
+
+	drivers, err := ff.getAvailableDriverVehicle(ctx, ride.SourceLat, ride.SourceLong, vehicleType)
+	if err != nil {
+		return driverResp, err
+	}
+
 	if len(drivers) == 0 {
-		log.Println("[FindDriver] Not Driver available for given vehicle type")
-		return defaultRes, errors.New("RR_FD_400")
+		log.Println("[getDriversForRideRequest] Not Driver available for given vehicle type")
+		return driverResp, nil
 	}
 
 	//preparing destination and source for gmaps
@@ -143,27 +168,17 @@ func (ff *FFClient) findDriver(ctx context.Context, ride *model.RideDetailModel,
 
 	distance, err := maps.MapsClient.GetDistance(ctx, destination, source)
 	if err != nil {
-		log.Println("[FindDriver][Error] Err in fetching distance from gmaps", err)
-		return nil, err
+		log.Println("[getDriversForRideRequest][Error] Err in fetching distance from gmaps", err)
 	}
 
 	log.Printf("Distance:%+v", distance)
 
-	driversList, err := ff.getDriversData(ctx, distance, drivers)
+	driverResp, err = ff.getDriversData(ctx, distance, drivers)
 	if err != nil {
-		return nil, err
+		return driverResp, err
 	}
 
-	log.Printf("Final Driver List:%+v", driversList)
-
-	// send push notification.
-	driverAloted, err := ff.sendPushNotification(ctx, driversList, ride)
-	if err != nil {
-		log.Println("[FindDriver][Error] Err in sending push notification", err)
-		return nil, err
-	}
-
-	return ff.rideResponse(ctx, driverAloted, ride)
+	return driverResp, nil
 }
 
 func (ff *FFClient) rideResponse(ctx context.Context, driverId int64, ride *model.RideDetailModel) (*RideBookResponse, error) {
@@ -356,7 +371,7 @@ func (ff *FFClient) RideStateTransition(ctx context.Context, ride *model.RideDet
 	return err
 }
 
-func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverData, ride *model.RideDetailModel) (int64, error) {
+func (ff *FFClient) driverBookAndSendNotification(ctx context.Context, drivers []DriverData, ride *model.RideDetailModel) (int64, error) {
 
 	var (
 		res         int64
@@ -371,6 +386,12 @@ func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverDa
 
 	//sending notifications to all drivers
 	var driverCount = make(map[int64]DriverData)
+
+	//wait for 30 seconds for driver booking or cancellation.
+	//configure time for sending notification. It should not be more than 90 seconds.
+	startTime := time.Now()
+
+rideLoop:
 	for _, driver := range drivers {
 
 		if ff.checkForRideRequestCancellation(ctx, ride.Id) {
@@ -387,16 +408,9 @@ func (ff *FFClient) sendPushNotification(ctx context.Context, drivers []DriverDa
 		//Sending push notification.
 		log.Printf("Sending Push notification to driver id:%d", driver.Id)
 		go ff.sendNotification(ctx, ride, driver)
-
 		driverCount[driver.Id] = driver
-	}
 
-	//wait for 30 seconds for driver booking or cancellation.
-	//configure time for sending notification. It should not be more than 90 seconds.
-	startTime := time.Now()
-
-rideLoop:
-	for ff.Cfg.Server.RideRequestTime > time.Duration(time.Since(startTime).Nanoseconds()) {
+		//waiting for driver 10 seconds.
 		select {
 		case <-riderChan:
 			log.Printf("Booking recieved for id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
@@ -432,6 +446,9 @@ rideLoop:
 			go ff.sendNotificationIfRideRequestCancelled(ctx, driverCount, ride)
 
 			break rideLoop
+		case <-DriverBookingDenied[ride.Id]:
+			log.Println("[sendPushNotification] Driver declined ride.Moving Forward .ride Id:", ride.Id)
+			break
 		case <-time.After(10 * time.Second):
 			log.Printf("No Driver booked yet for id:%d , driver id:%d", ride.Id, rideUpdated.DriverId)
 			break
@@ -439,6 +456,7 @@ rideLoop:
 			log.Printf("Request Time out for ride id:%d, time served:%v", ride.Id, time.Duration(time.Since(startTime).Nanoseconds()))
 			break rideLoop
 		}
+
 	}
 
 	res = rideUpdated.DriverId

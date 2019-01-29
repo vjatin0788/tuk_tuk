@@ -29,16 +29,6 @@ func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}, 
 		return err
 	}
 
-	// if res.StatusCode != http.StatusOK {
-	// 	log.Println("[SendPushNotification][Error]Status code mismatch ", resp.StatusCode)
-	// 	return errors.New("Statuscode mismatch")
-	// }
-
-	// if resp.Fail > 0 {
-	// 	log.Println("[SendPushNotification][Error]Failed to send notification ", resp.Fail)
-	// 	return errors.New("Fail TO send Notification")
-	// }
-
 	log.Printf("Resp :%+v", res)
 	return err
 }
