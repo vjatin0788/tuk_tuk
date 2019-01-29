@@ -133,10 +133,6 @@ func (ff *FFClient) sendPushNotificationRideCancel(ctx context.Context, ride mod
 			RideId:  ride.Id,
 			Message: "RIDE CANCEL",
 		},
-		Notification: PushNotificationRideCancel{
-			RideId:  ride.Id,
-			Message: "RIDE CANCEL",
-		},
 	}
 
 	go fbclient.SendPushNotification(ctx, payLoad, data.DeviceId)
