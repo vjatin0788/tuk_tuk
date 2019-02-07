@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TukTuk/errs"
+
 	"github.com/TukTuk/firebase"
 	"github.com/TukTuk/lib"
 
@@ -135,7 +137,7 @@ func (ff *FFClient) findDriver(ctx context.Context, ride *model.RideDetailModel,
 	log.Printf("Final Driver List:%+v", driversList)
 
 	if len(driversList) == 0 {
-		return defaultRes, err
+		return defaultRes, errs.Err("DR_AV_4000")
 	}
 
 	// send push notification.
