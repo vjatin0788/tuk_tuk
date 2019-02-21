@@ -46,6 +46,7 @@ type DriverUserModel struct {
 	Name                            string `db:"name" json:"name"`
 	DeviceId                        string `db:"device_id" json:"device_id"`
 	Refferal                        int64  `db:"refferal" json:"refferal"`
+	DeviceType                      string `db:"device_type" json:"device_type"`
 }
 
 type DriverUserTable struct {
@@ -88,6 +89,7 @@ type DriverUserTable struct {
 	Name                            sql.NullString `db:"name" json:"name"`
 	DeviceId                        string         `db:"device_id" json:"device_id"`
 	Refferal                        sql.NullInt64  `db:"refferal" json:"refferal"`
+	DeviceType                      sql.NullString `db:"device_type" json:"device_type"`
 }
 
 func (table DriverUserTable) GetModel() DriverUserModel {
@@ -131,6 +133,7 @@ func (table DriverUserTable) GetModel() DriverUserModel {
 		Name:                            table.Name.String,
 		DeviceId:                        table.DeviceId,
 		Refferal:                        table.Refferal.Int64,
+		DeviceType:                      table.DeviceType.String,
 	}
 }
 
@@ -175,6 +178,7 @@ func (model DriverUserModel) GetTable() DriverUserTable {
 		Name:                            sql.NullString{model.Name, false},
 		DeviceId:                        model.DeviceId,
 		Refferal:                        sql.NullInt64{model.Refferal, false},
+		DeviceType:                      sql.NullString{model.DeviceType, false},
 	}
 }
 

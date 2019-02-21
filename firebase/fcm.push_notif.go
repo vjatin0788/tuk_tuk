@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"strings"
+
+	"github.com/TukTuk/common"
 
 	fcm "github.com/appleboy/go-fcm"
 )
 
-func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}, deviceId string) error {
+func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}, deviceId, deviceType string) error {
 
 	var err error
 
@@ -21,14 +24,20 @@ func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}, 
 	}
 
 	msg := &fcm.Message{
-		To: deviceId,
-		Data: map[string]interface{}{
-			"response": data,
-		},
+		To:         deviceId,
 		TimeToLive: fb.Timeout,
-		Notification: &fcm.Notification{
+	}
+
+	if strings.EqualFold(deviceType, common.DEVICE_IOS) {
+		msg.Notification = &fcm.Notification{
 			Body: string(bytes),
-		},
+		}
+	}
+
+	if strings.EqualFold(deviceType, common.DEVICE_ANDROID) {
+		msg.Data = map[string]interface{}{
+			"response": data,
+		}
 	}
 
 	log.Printf("[SendPushNotification]Sending Push Notif:%+v data:%+v", data)
