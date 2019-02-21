@@ -23,7 +23,7 @@ type DBTuktuk struct {
 func InitDatabase() error {
 
 	var err error
-	masterDBStr := common.MASTER_DB_PROD
+	masterDBStr := common.MASTER_DB_STAG
 
 	masterDB := &DBTuktuk{
 		DBString: masterDBStr,
