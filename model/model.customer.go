@@ -30,6 +30,7 @@ type CustomerModel struct {
 	EmailOtp       string `db:"email_otp" json:"email_otp"`
 	DeviceId       string `db:"device_id" json:"device_id"`
 	Refferal       int64  `db:"refferal" json:"refferal"`
+	DeviceType     string `db:"device_type" json:"device_type"`
 }
 
 type CustomerTable struct {
@@ -56,6 +57,7 @@ type CustomerTable struct {
 	EmailOtp       sql.NullString `db:"email_otp" json:"email_otp"`
 	DeviceId       sql.NullString `db:"device_id" json:"device_id"`
 	Refferal       sql.NullInt64  `db:"refferal" json:"refferal"`
+	DeviceType     sql.NullString `db:"device_type" json:"device_type"`
 }
 
 func (table CustomerTable) GetModel() CustomerModel {
@@ -83,6 +85,7 @@ func (table CustomerTable) GetModel() CustomerModel {
 		MobileOtp:      table.MobileOtp.String,
 		DeviceId:       table.DeviceId.String,
 		Refferal:       table.Refferal.Int64,
+		DeviceType:     table.DeviceType.String,
 	}
 }
 
@@ -111,6 +114,7 @@ func (model CustomerModel) GetTable() CustomerTable {
 		MobileOtp:      sql.NullString{model.MobileOtp, false},
 		DeviceId:       sql.NullString{model.DeviceId, false},
 		Refferal:       sql.NullInt64{model.Refferal, false},
+		DeviceType:     sql.NullString{model.DeviceType, false},
 	}
 }
 

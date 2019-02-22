@@ -34,7 +34,7 @@ func (fb *FireBase) SendPushNotification(ctx context.Context, data interface{}, 
 		}
 	}
 
-	if strings.EqualFold(deviceType, common.DEVICE_ANDROID) {
+	if strings.EqualFold(deviceType, common.DEVICE_ANDROID) || deviceType == "" {
 		msg.Data = map[string]interface{}{
 			"response": data,
 		}

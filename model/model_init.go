@@ -43,18 +43,18 @@ var (
 	getVehicleByAssignedDriver = `SELECT * FROM tbvehicle WHERE assigned_driver_id IN (?)`
 
 	getCustomerByAuth = `SELECT customer_id,user_id,email_type,email_id,login_via,name,gender,password,dob,mobile_no,photo_url,token,last_login,
-	created_by,created_on,updated_by,updated_on,mobile_verified,email_verified,mobile_otp,email_otp,device_id,refferal  FROM tbcustomers WHERE token=?`
+	created_by,created_on,updated_by,updated_on,mobile_verified,email_verified,mobile_otp,email_otp,device_id,refferal,device_type  FROM tbcustomers WHERE token=?`
 
 	getCustomerById = `SELECT customer_id,user_id,email_type,email_id,login_via,name,gender,password,dob,mobile_no,photo_url,token,last_login,
-	created_by,created_on,updated_by,updated_on,mobile_verified,email_verified,mobile_otp,email_otp,device_id,refferal FROM tbcustomers WHERE customer_id=?`
+	created_by,created_on,updated_by,updated_on,mobile_verified,email_verified,mobile_otp,email_otp,device_id,refferal,device_type FROM tbcustomers WHERE customer_id=?`
 
 	getDriverByAuth = `SELECT userid,name,emailid,gender,dob,mobile_no,photo_url,token,last_login,user_type,created_by,created_on,password,address,logout_at,city,driving_licence_front,
 	driving_licence_number,driver_pic,pancard,pan_card_number,registration_certificate,certificate_of_registration_number,motor_insurence,motor_insurence_number,police_verification,police_verification_number,
-	adhar_card,aadhar_card_number,in_time,out_time,login_status,updated_on,vehicle_type,status,driver_assigned,driver_duty_status,device_id,refferal FROM tbusers WHERE FIND_IN_SET(?, token)`
+	adhar_card,aadhar_card_number,in_time,out_time,login_status,updated_on,vehicle_type,status,driver_assigned,driver_duty_status,device_id,refferal,device_type FROM tbusers WHERE FIND_IN_SET(?, token)`
 
 	getDriverUserById = `SELECT userid,name,emailid,gender,dob,mobile_no,photo_url,token,last_login,user_type,created_by,created_on,password,address,logout_at,city,driving_licence_front,
 	driving_licence_number,driver_pic,pancard,pan_card_number,registration_certificate,certificate_of_registration_number,motor_insurence,motor_insurence_number,police_verification,police_verification_number,
-	adhar_card,aadhar_card_number,in_time,out_time,login_status,updated_on,vehicle_type,status,driver_assigned,driver_duty_status,device_id,refferal FROM tbusers WHERE userid=?`
+	adhar_card,aadhar_card_number,in_time,out_time,login_status,updated_on,vehicle_type,status,driver_assigned,driver_duty_status,device_id,refferal,device_type FROM tbusers WHERE userid=?`
 
 	insertInvoiceByCustomerId          = `INSERT INTO tbinvoice(customer_id,driver_id,source_lat,source_lng,source_address,destination_lat,destination_lng,source_time,total_minutes,cost_per_minute,time_cost,distance,cost_per_km,distance_cost,base_fare,extra_charges,discount,total_cost,gst_percentage,gst,final_cost) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 	getInvoiceByCustomerId             = `SELECT * FROM tbinvoice WHERE customer_id=? ORDER BY invoice_id DESC LIMIT `
