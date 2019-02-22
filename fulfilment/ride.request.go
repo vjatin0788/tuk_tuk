@@ -640,7 +640,7 @@ func (ff *FFClient) sendNotification(ctx context.Context, ride *model.RideDetail
 
 	log.Printf("[sendNotification]Push notification:%+v", data)
 
-	go fbclient.SendPushNotification(ctx, data, driver.DeviceId)
+	go fbclient.SendPushNotification(ctx, data, driver.DeviceId, "")
 }
 
 func (ff *FFClient) sendInvalidDriverNotification(ctx context.Context, driverId int64, ride *model.RideDetailModel) {
@@ -662,7 +662,7 @@ func (ff *FFClient) sendInvalidDriverNotification(ctx context.Context, driverId 
 
 	log.Printf("[sendNotification]Push notification:%+v", data)
 
-	go fbclient.SendPushNotification(ctx, data, ddata.DeviceId)
+	go fbclient.SendPushNotification(ctx, data, ddata.DeviceId, "")
 }
 
 func (ff *FFClient) checkForRideRequestCancellation(ctx context.Context, rideId int64) bool {
@@ -705,6 +705,6 @@ func (ff *FFClient) sendNotificationIfRideRequestCancelled(ctx context.Context, 
 
 		log.Printf("[sendNotificationIfRideRequestCancelled]Push notification:%+v", data)
 
-		fbclient.SendPushNotification(ctx, data, ddata.DeviceId)
+		fbclient.SendPushNotification(ctx, data, ddata.DeviceId, "")
 	}
 }

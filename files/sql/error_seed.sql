@@ -1,3 +1,3 @@
 
 
-INSERT INTO `tberrors`(`error_code`,`status`,`message`) VALUES('PA_RI_400',400,'Unable to get payment info')
+INSERT INTO `tberrors`(`error_code`,`status`,`message`) VALUES('DR_AV_4000',400,'No Driver available')

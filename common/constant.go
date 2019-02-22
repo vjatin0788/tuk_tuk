@@ -20,6 +20,8 @@ const (
 	DRIVER_DUTY_STATUS = "On"
 	CASH               = "cash"
 	DRIVING_MODE       = "Driving"
+	DEVICE_IOS         = "ios"
+	DEVICE_ANDROID     = "default"
 )
 
 //Endpoints
