@@ -322,7 +322,7 @@ func (ff *FFClient) sendPushNotificationToCustomer(ctx context.Context, ride mod
 		log.Printf("[sendPushNotificationRideComplete][Error] Customer ID mismatch in ride details. Found id:%d, required id:%d", ddata.CustomerId, ride.Id)
 	}
 
-	go fbclient.SendPushNotification(ctx, data, ddata.DeviceId)
+	go fbclient.SendPushNotification(ctx, data, ddata.DeviceId, ddata.DeviceType)
 }
 
 func (ff *FFClient) DriverRideCancel(ctx context.Context, userId int64, rideReq RideCancelRequest) (interface{}, error) {
@@ -418,7 +418,7 @@ func (ff *FFClient) sendPushNotificationDriverRideCancel(ctx context.Context, ri
 		},
 	}
 
-	go fbclient.SendPushNotification(ctx, payLoad, cdata.DeviceId)
+	go fbclient.SendPushNotification(ctx, payLoad, cdata.DeviceId, cdata.DeviceType)
 }
 
 func (ff *FFClient) GetDriverRideStatus(ctx context.Context, id int64) (interface{}, error) {
@@ -615,5 +615,5 @@ func (ff *FFClient) sendNotificationDriverArrived(ctx context.Context, ride *mod
 		return
 	}
 
-	fbclient.SendPushNotification(ctx, payLoad, customerData.DeviceId)
+	fbclient.SendPushNotification(ctx, payLoad, customerData.DeviceId, customerData.DeviceType)
 }

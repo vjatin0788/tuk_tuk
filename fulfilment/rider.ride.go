@@ -135,7 +135,7 @@ func (ff *FFClient) sendPushNotificationRideCancel(ctx context.Context, ride mod
 		},
 	}
 
-	go fbclient.SendPushNotification(ctx, payLoad, data.DeviceId)
+	go fbclient.SendPushNotification(ctx, payLoad, data.DeviceId, data.DeviceType)
 }
 
 func (ff *FFClient) GetCustomerRideStatus(ctx context.Context, custId int64) (interface{}, error) {

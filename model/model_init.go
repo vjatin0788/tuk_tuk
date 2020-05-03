@@ -37,14 +37,25 @@ var (
 )
 
 var (
-	insertDriver                       = `INSERT INTO driver_tracking(driver_id,current_lat,current_long,current_lat_rad,current_long_rad) VALUES(?,?,?,?,?)`
-	updateDriver                       = `UPDATE driver_tracking SET current_lat=?,current_long=?,current_lat_rad=?,current_long_rad=?,last_lat=?,last_long=?,last_lat_rad=?,last_long_rad=? WHERE  driver_id = ?`
-	getDriverById                      = `SELECT id,driver_id,current_lat,current_long,current_lat_rad,current_long_rad FROM driver_tracking WHERE driver_id=?`
-	getVehicleByAssignedDriver         = `SELECT * FROM tbvehicle WHERE assigned_driver_id IN (?)`
-	getCustomerByAuth                  = `SELECT * FROM tbcustomers WHERE token=?`
-	getCustomerById                    = `SELECT * FROM tbcustomers WHERE customer_id=?`
-	getDriverByAuth                    = `SELECT * FROM tbusers WHERE FIND_IN_SET(?, token)`
-	getDriverUserById                  = `SELECT * FROM tbusers WHERE userid=?`
+	insertDriver               = `INSERT INTO driver_tracking(driver_id,current_lat,current_long,current_lat_rad,current_long_rad) VALUES(?,?,?,?,?)`
+	updateDriver               = `UPDATE driver_tracking SET current_lat=?,current_long=?,current_lat_rad=?,current_long_rad=?,last_lat=?,last_long=?,last_lat_rad=?,last_long_rad=? WHERE  driver_id = ?`
+	getDriverById              = `SELECT id,driver_id,current_lat,current_long,current_lat_rad,current_long_rad FROM driver_tracking WHERE driver_id=?`
+	getVehicleByAssignedDriver = `SELECT * FROM tbvehicle WHERE assigned_driver_id IN (?)`
+
+	getCustomerByAuth = `SELECT customer_id,user_id,email_type,email_id,login_via,name,gender,password,dob,mobile_no,photo_url,token,last_login,
+	created_by,created_on,updated_by,updated_on,mobile_verified,email_verified,mobile_otp,email_otp,device_id,refferal,device_type  FROM tbcustomers WHERE token=?`
+
+	getCustomerById = `SELECT customer_id,user_id,email_type,email_id,login_via,name,gender,password,dob,mobile_no,photo_url,token,last_login,
+	created_by,created_on,updated_by,updated_on,mobile_verified,email_verified,mobile_otp,email_otp,device_id,refferal,device_type FROM tbcustomers WHERE customer_id=?`
+
+	getDriverByAuth = `SELECT userid,name,emailid,gender,dob,mobile_no,photo_url,token,last_login,user_type,created_by,created_on,password,address,logout_at,city,driving_licence_front,
+	driving_licence_number,driver_pic,pancard,pan_card_number,registration_certificate,certificate_of_registration_number,motor_insurence,motor_insurence_number,police_verification,police_verification_number,
+	adhar_card,aadhar_card_number,in_time,out_time,login_status,updated_on,vehicle_type,status,driver_assigned,driver_duty_status,device_id,refferal,device_type FROM tbusers WHERE FIND_IN_SET(?, token)`
+
+	getDriverUserById = `SELECT userid,name,emailid,gender,dob,mobile_no,photo_url,token,last_login,user_type,created_by,created_on,password,address,logout_at,city,driving_licence_front,
+	driving_licence_number,driver_pic,pancard,pan_card_number,registration_certificate,certificate_of_registration_number,motor_insurence,motor_insurence_number,police_verification,police_verification_number,
+	adhar_card,aadhar_card_number,in_time,out_time,login_status,updated_on,vehicle_type,status,driver_assigned,driver_duty_status,device_id,refferal,device_type FROM tbusers WHERE userid=?`
+
 	insertInvoiceByCustomerId          = `INSERT INTO tbinvoice(customer_id,driver_id,source_lat,source_lng,source_address,destination_lat,destination_lng,source_time,total_minutes,cost_per_minute,time_cost,distance,cost_per_km,distance_cost,base_fare,extra_charges,discount,total_cost,gst_percentage,gst,final_cost) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 	getInvoiceByCustomerId             = `SELECT * FROM tbinvoice WHERE customer_id=? ORDER BY invoice_id DESC LIMIT `
 	insertRideDetails                  = `INSERT INTO tb_ride_details(customer_id,source_lat,source_long,destination_lat,destination_long,status,payment_method,source_address,destination_address) VALUES(?,?,?,?,?,?,?,?,?)`
